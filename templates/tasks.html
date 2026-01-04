@@ -9,6 +9,7 @@
 <li>
     {{ task.title }}
     <a href="{% url 'tasks:task-edit' task.pk %}">Edit</a>
+    <a href="{% url 'tasks:task-delete' task.pk %}">Delete</a>
 </li>
 
 <a href="{% url 'tasks:task-create' %}"> + New Task </a>

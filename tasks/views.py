@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Task
@@ -21,6 +21,14 @@ class TaskUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_queryset(self):
         return Task.objects.filter(owner=self.request.user) # Visiblity and Ownership
+    
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    model = Task
+    template_name = 'task_confirm_delete.html'
+    success_url = reverse_lazy('tasks:task-list')
+
+    def get_queryset(self):
+        return Task.objects.filter(owner=self.request.user)
 
 class TaskListView(LoginRequiredMixin, ListView):
     model = Task
@@ -29,3 +37,4 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Task.objects.filter(owner=self.request.user)
+    
