@@ -4,6 +4,16 @@
 
 <h1>Tasks List</h1>
 
+{% for task in tasks %}
+
+<li>
+    {{ task.title }}
+    <a href="{% url 'tasks:task-edit' task.pk %}">Edit</a>
+</li>
+
+<a href="{% url 'tasks:task-create' %}"> + New Task </a>
+
+{% endfor %}
 
 
 {% endblock content %}
