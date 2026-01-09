@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Task
@@ -38,3 +38,17 @@ class TaskListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Task.objects.filter(owner=self.request.user)
     
+class TaskDetailView(LoginRequiredMixin, DetailView):
+    model = Task
+    template_name = 'task_detail.html'
+    context_object_name = 'task'
+
+    def get_queryset(self):
+        return Task.objects.filter(owner=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs) # Get the original Context (contains the task object as 'task')
+
+        # Attach related comment
+        context['comments'] = self.object.comments.select_related('author').order_by('-created_at')
+        return context
