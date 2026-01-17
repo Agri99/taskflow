@@ -5,6 +5,6 @@ from .views import CommentCreateView, CommentDeleteView
 app_name = 'comments'
 
 urlpatterns = [
-    path('add/<int:task_id>/', CommentCreateView.as_view(), name='comment-add'),
-    path('delete/<int:pk>/', CommentDeleteView.as_view(), name='comment-delete'),
+    path('add/', CommentCreateView.as_view(), name='comment-add'),
+    path('tasks/<int:task_id>/comments/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment-delete'),
 ]

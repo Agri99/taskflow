@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import *
 
 app_name = 'tasks'
@@ -9,4 +9,5 @@ urlpatterns = [
     path('<int:pk>/edit/', TaskUpdateView.as_view(), name='task-edit'),
     path('<int:pk>/delete/', TaskDeleteView.as_view(), name='task-delete'),
     path('<int:pk>/', TaskDetailView.as_view(), name='task-detail'),
+    path('<int:task_id>/comments/', include('comments.urls', namespace='comments')),
     ]

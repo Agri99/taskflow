@@ -22,9 +22,12 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
             pk=self.kwargs['task_id']
         )
 
-        # Change if the tasks need to be commentable by others.
+        '''
+        If the tasks not to be commentable by others.
+
         if task.owner != self.request.user:
             raise Http404
+        '''
 
         form.instance.author = self.request.user
         form.instance.task = task
@@ -38,13 +41,20 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'comment_confirm_delete.html'
 
     def get_queryset(self):
-        # Allow deletion when the current user is either the comment author
-        return Comment.objects.filter(Q(author=self.request.user) | Q(task__owner=self.request.user)) # Q is used to express the OR cleanly
+        # Allow deletion when the current user is either the comment author or the owner of the parent task.
+        return Comment.objects.filter(
+            Q(author=self.request.user) | Q(task__owner=self.request.user)
+            ) # Q is used to express the OR cleanly
 
     def get_object(self):
-        comment = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
+        # Use the restricted queryset so that unauthorized looksup return 404
+        comment = get_object_or_404(
+            self.get_queryset(),
+            pk=self.kwargs['pk'],
+            task_id=self.kwargs['task_id'],
+            )
 
-        # can_be_deleted_by is just an additional sefety belt
+        # Extra safety, ensure model-level helper agrees
         if not comment.can_be_deleted_by(self.request.user):
             raise Http404
         
