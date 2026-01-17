@@ -7,7 +7,7 @@ from .mixins import OwnerRequiredMixin
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
     fields = ['title', 'description', 'status', 'priority', 'due_date']
-    template_name = 'task_form.html'
+    template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:task-list')
 
     def form_valid(self, form):
@@ -17,12 +17,12 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 class TaskUpdateView(OwnerRequiredMixin, UpdateView):
     model = Task
     fields = ['title', 'description', 'status', 'priority', 'due_date']    
-    template_name = 'task_form.html'
+    template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:task-list')
     
 class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = Task
-    template_name = 'task_confirm_delete.html'
+    template_name = 'tasks/task_confirm_delete.html'
     success_url = reverse_lazy('tasks:task-list')
 
     def get_queryset(self):
@@ -30,7 +30,7 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
 
 class TaskListView(LoginRequiredMixin, ListView):
     model = Task
-    template_name = 'tasks.html'
+    template_name = 'tasks/tasks.html'
     context_object_name = 'tasks'
 
     def get_queryset(self):
@@ -39,7 +39,7 @@ class TaskListView(LoginRequiredMixin, ListView):
     
 class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
-    template_name = 'task_detail.html'
+    template_name = 'tasks/task_detail.html'
     context_object_name = 'task'
 
     def get_queryset(self):
