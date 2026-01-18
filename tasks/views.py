@@ -1,8 +1,10 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+
 from .models import Task
 from .mixins import OwnerRequiredMixin
+from comments.models import Comment
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
@@ -54,5 +56,6 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs) # Get the original Context (contains the task object as 'task')
 
         # Attach related comment
-        context['comments'] = self.object.comments.select_related('author').order_by('-created_at')
+        context['comments'] = (Comment.objects.filter(task=task).select_related('author'))
         return context
+    

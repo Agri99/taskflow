@@ -10,15 +10,15 @@ User = get_user_model()
 class CommentUpdatePermissionTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(
-            'owner',
+            username = 'owner',
             password = 'pass1234'
         )
         self.author = User.objects.create_user(
-            'author',
+            username = 'author',
             password = 'pass1234'
         )
         self.other = User.objects.create_user(
-            'other',
+            username = 'other',
             password = 'pass1234'
         )
 
@@ -41,7 +41,7 @@ class CommentUpdatePermissionTests(TestCase):
             )
         
         url = reverse(
-            'comments:comment-edit',
+            'tasks:comments:comment-edit',
             kwargs={
                 'task_id': self.task.pk,
                 'pk': self.comment.pk,
@@ -61,7 +61,7 @@ class CommentUpdatePermissionTests(TestCase):
         )
         
         url = reverse(
-            'comments:comment-edit',
+            'tasks:comments:comment-edit',
             kwargs={
                 'task_id': self.task.pk,
                 'pk': self.comment.pk,
@@ -81,7 +81,7 @@ class CommentUpdatePermissionTests(TestCase):
         )
 
         url = reverse(
-            'comments:comment-edit',
+            'tasks:comments:comment-edit',
             kwargs={
                 'task_id': self.task.pk,
                 'pk': self.comment.pk,

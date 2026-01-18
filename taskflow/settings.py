@@ -55,6 +55,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'taskflow.urls'
 
+COMMENTS_ACTIVE_ONLY = True # Default: hide soft-deleted comments
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

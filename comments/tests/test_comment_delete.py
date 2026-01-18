@@ -40,7 +40,7 @@ class CommentDeletePermissionTests(TestCase):
             )
         
         url = reverse(
-            'comments:comment-delete',
+            'tasks:comments:comment-delete',
             kwargs={
                 'task_id': self.task.pk,
                 'pk': self.comment.pk,
@@ -49,10 +49,11 @@ class CommentDeletePermissionTests(TestCase):
 
         response = self.client.post(url)
 
+        self.comment.refresh_from_db()
+
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(
-            Comment.objects.filter(pk = self.comment.pk).exists()
-        )
+        self.assertTrue(self.comment.is_deleted)
+        self.assertIsNotNone(self.comment.deleted_at)
     
     def test_task_owner_can_delete_others_comment(self):
         self.client.login(
@@ -60,7 +61,7 @@ class CommentDeletePermissionTests(TestCase):
             password = 'pass1234'
         )
 
-        url = reverse('comments:comment-delete',
+        url = reverse('tasks:comments:comment-delete',
                       kwargs={
                           'task_id': self.task.pk,
                           'pk': self.comment.pk,
@@ -68,17 +69,18 @@ class CommentDeletePermissionTests(TestCase):
         
         response = self.client.post(url)
 
+        self.comment.refresh_from_db()
+
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(
-            Comment.objects.filter(pk=self.comment.pk).exists()
-            )
+        self.assertTrue(self.comment.is_deleted)
+        self.assertIsNotNone(self.comment.deleted_at)
         
     def test_random_user_cannot_delete_comment(self):
         self.client.login(
             username = 'other',
             password = 'pass1234'
         )
-        url = reverse('comments:comment-delete',
+        url = reverse('tasks:comments:comment-delete',
                       kwargs={
                           'task_id': self.task.pk,
                           'pk': self.comment.pk,
@@ -86,10 +88,10 @@ class CommentDeletePermissionTests(TestCase):
         
         response = self.client.post(url)
 
+        self.comment.refresh_from_db
+
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(
-            Comment.objects.filter(pk=self.comment.pk).exists()
-            )
+        self.assertFalse(self.comment.is_deleted)
 
     def test_wrong_task_id_returns_404(self):
         self.client.login(
@@ -99,7 +101,7 @@ class CommentDeletePermissionTests(TestCase):
 
         wrong_task_id = self.task.pk + 999
 
-        url = reverse('comments:comment-delete',
+        url = reverse('tasks:comments:comment-delete',
                       kwargs={
                           'task_id': wrong_task_id,
                           'pk': self.comment.pk,
@@ -107,7 +109,7 @@ class CommentDeletePermissionTests(TestCase):
         
         response = self.client.post(url)
 
+        self.comment.refresh_from_db()
+
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(
-            Comment.objects.filter(pk=self.comment.pk).exists()
-        )
+        self.assertFalse(self.comment.is_deleted)

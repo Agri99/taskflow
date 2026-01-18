@@ -2,8 +2,7 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
-from django.http import Http404
-from django.db.models import Q
+from django.http import Http404, HttpResponseRedirect
 
 from .models import Comment
 from tasks.models import Task
@@ -42,9 +41,7 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         # Allow deletion when the current user is either the comment author or the owner of the parent task.
-        return Comment.objects.filter(
-            Q(author=self.request.user) | Q(task__owner=self.request.user)
-            ) # Q is used to express the OR cleanly
+        return Comment.objects.deletable_by(self.request.user)
 
     def get_object(self):
         # Use the restricted queryset so that unauthorized looksup return 404
@@ -60,8 +57,16 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
         
         return comment
     
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.soft_delete(by_user=request.user)
+        return HttpResponseRedirect(self.get_success_url())
+    
     def get_success_url(self):
-        return reverse_lazy('tasks:task-detail', kwargs={'pk': self.object.task.pk})
+        return reverse_lazy(
+            'tasks:task-detail',
+            kwargs={'pk': self.object.task.pk}
+            )
 
 class CommentUpdateView(LoginRequiredMixin, UpdateView):
     model = Comment
@@ -70,7 +75,7 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_queryset(self):
         # Author only editing.
-        return Comment.objects.filter(author=self.request.user)
+        return Comment.objects.editable_by(self.request.user)
     
     def get_object(self):
         # Enforce author ownership, correct task relationship and 404 on any violation
