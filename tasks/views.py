@@ -56,6 +56,6 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs) # Get the original Context (contains the task object as 'task')
 
         # Attach related comment
-        context['comments'] = (Comment.objects.filter(task=task).select_related('author'))
+        context['comments'] = (Comment.objects.filter(task=self.object).select_related('author'))
         return context
     

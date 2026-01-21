@@ -57,6 +57,8 @@ ROOT_URLCONF = 'taskflow.urls'
 
 COMMENTS_ACTIVE_ONLY = True # Default: hide soft-deleted comments
 
+COMMENTS_EDIT_WINDOW_MINUTES = 15 # Default time limit for comments edit window
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

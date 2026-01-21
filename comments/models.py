@@ -1,8 +1,13 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.conf import settings
+from datetime import timedelta
+
+from typing import TYPE_CHECKING
 
 from tasks.models import Task
+from typing import ClassVar
 from .managers import CommentQuerySet, CommentManager
 
 User = get_user_model()
@@ -19,7 +24,7 @@ class Comment(models.Model):
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name='deleted_comments'
     )
 
-    objects = CommentManager()                  # Default Manager: active only
+    objects: ClassVar[CommentManager] = CommentManager()                  # Default Manager: active only
     all_objects = CommentQuerySet.as_manager()  # Access including deleted
 
     def can_be_deleted_by(self, user):
@@ -34,7 +39,14 @@ class Comment(models.Model):
         if not user or not user.is_authenticated:
             return False
         
-        return user == self.author
+        if user != self.author:
+            return False
+        
+        window = getattr(settings, 'COMMENT_EDIT_WINDOW_MINUTES', None)
+        if window is None:
+            return True # Unlimited editing if disabled
+        
+        return timezone.now() <= self.created_at + timedelta(minutes=window)
     
     def soft_delete(self, *, by_user):
         self.is_deleted = True

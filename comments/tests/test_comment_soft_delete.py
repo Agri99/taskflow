@@ -59,3 +59,33 @@ class CommentSoftDelete(TestCase):
         self.assertTrue(comment.is_deleted)
         self.assertIsNotNone(comment.deleted_at)
         self.assertTrue(Comment.all_objects.filter(pk=self.comment.pk).exists())
+
+    def test_deleting_already_deleted_comment_is_idempotent(self):
+        # First delete
+        self.client.login(
+            username = 'author',
+            password = 'pass1234'
+        )
+
+        url = reverse(
+            'tasks:comments:comment-delete',
+            kwargs={
+                'task_id': self.task.pk,
+                'pk': self.comment.pk
+            }
+        )
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302) # initial delete redirect
+
+        self.comment.refresh_from_db()
+        original_deleted_at = self.comment.deleted_at
+        self.assertIsNotNone(original_deleted_at)
+
+        # Second delete attempt
+        response = self.client.post(url)
+        self.comment.refresh_from_db()
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.comment.deleted_at, original_deleted_at)
+        

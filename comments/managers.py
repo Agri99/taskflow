@@ -20,7 +20,11 @@ class CommentQuerySet(models.QuerySet):
         if not user or not user.is_authenticated:
             return self.none()
         
-        return self.filter(author=user)
+        cutoff = timezone.now() - timedelta(
+            minutes=settings.COMMENTS_EDIT_WINDOW_MINUTES
+        )
+        
+        return self.filter(author=user, created_at__gt=cutoff, deleted_at__isnull=True)
     
     def purge_older_than(self, days):
         cutoff = timezone.now() - timedelta(days=days)
