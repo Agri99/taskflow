@@ -23,6 +23,7 @@ class Comment(models.Model):
     deleted_by = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name='deleted_comments'
     )
+    edited_at = models.DateTimeField(null=True, blank=True)
 
     objects: ClassVar[CommentManager] = CommentManager()                  # Default Manager: active only
     all_objects = CommentQuerySet.as_manager()  # Access including deleted
@@ -47,6 +48,10 @@ class Comment(models.Model):
             return True # Unlimited editing if disabled
         
         return timezone.now() <= self.created_at + timedelta(minutes=window)
+    
+    def mark_edited(self):
+        if self.edited_at is None:
+            self.edited_at = timezone.now()
     
     def soft_delete(self, *, by_user):
         self.is_deleted = True

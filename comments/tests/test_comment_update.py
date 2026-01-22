@@ -196,3 +196,46 @@ class CommentUpdatePermissionTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 404)
+
+    def test_first_edit_sets_edited_at(self):
+        self.client.login(
+            username = 'author',
+            password = 'pass1234'
+        )
+
+        url = reverse(
+            'tasks:comments:comment-edit',
+            kwargs={
+                'task_id': self.task.pk,
+                'pk': self.comment.pk,
+            }
+        )
+
+        response = self.client.post(url, {'content': 'edited'})
+
+        self.comment.refresh_from_db()
+        self.assertIsNotNone(self.comment.edited_at)
+
+    def test_second_edit_does_not_change_edited_at(self):
+        self.client.login(
+            username = 'author',
+            password = 'pass1234'
+        )
+
+        url = reverse(
+        'tasks:comments:comment-edit',
+        kwargs={
+            'task_id': self.task.pk,
+            'pk': self.comment.pk,
+            }
+        )
+
+        # First edit attempt
+        self.client.post(url, {'content': 'edited once'})
+        first_time = Comment.objects.get(pk=self.comment.pk).edited_at
+
+        self.client.post(url, {'content': 'edited twice'})
+        self.comment.refresh_from_db()
+
+        self.assertEqual(self.comment.edited_at, first_time)
+        

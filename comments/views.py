@@ -87,6 +87,12 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
 
         return comment
     
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.object.mark_edited()
+        self.object.save(update_fields=['edited_at'])
+        return response
+    
     def get_success_url(self):
         return reverse_lazy(
             'tasks:task-detail',
