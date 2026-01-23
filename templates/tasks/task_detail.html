@@ -18,6 +18,11 @@
     <li>
         <strong>{{ comment.author.username }}</strong>
         {{ comment.content }}
+        {% if comment.is_edited %}
+            <span class="comment-edited" title="This comment was edited">
+                (edited)
+            </span>
+        {% endif %}
         <small>{{ comment.created_at }}</small>
         {% if user == comment.author or user == task.owner %}
             <form action="{% url 'comments:comment-delete' comment.pk %}" method="post">

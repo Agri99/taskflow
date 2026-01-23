@@ -238,4 +238,41 @@ class CommentUpdatePermissionTests(TestCase):
         self.comment.refresh_from_db()
 
         self.assertEqual(self.comment.edited_at, first_time)
+
+    def test_new_comment_is_not_edited(self):
+        self.assertFalse(self.comment.is_edited)
+        self.assertIsNone(self.comment.edited_at)
+
+    def test_editing_comment_sets_edited_flag(self):
+        self.client.login(
+            username = 'author',
+            password = 'pass1234'
+        )
         
+        url = reverse(
+            'tasks:comments:comment-edit',
+            kwargs={
+                'task_id': self.task.pk,
+                'pk': self.comment.pk
+            }
+        )
+
+        self.client.post(url, {'content': 'Edited comment'})
+
+        self.comment.refresh_from_db()
+
+        self.assertTrue(self.comment.is_edited)
+        self.assertIsNotNone(self.comment.edited_at)
+
+    def test_edited_at_is_not_overwritten_on_second_attempt(self):
+        first_edit_time = timezone.now() - timedelta(minutes=5)
+
+        self.comment.edited_at = first_edit_time
+        self.comment.save(update_fields=['edited_at'])
+
+        self.comment.mark_edited()
+        self.comment.save()
+
+        self.comment.refresh_from_db()
+
+        self.assertEqual(self.comment.edited_at, first_edit_time)

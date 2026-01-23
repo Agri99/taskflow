@@ -88,7 +88,9 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
         return comment
     
     def form_valid(self, form):
+        # The super().form_valid will set self.object to the updated object
         response = super().form_valid(form)
+        # Mark edited once only
         self.object.mark_edited()
         self.object.save(update_fields=['edited_at'])
         return response

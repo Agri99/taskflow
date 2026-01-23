@@ -36,12 +36,18 @@ class Comment(models.Model):
         return user == self.author or user == self.task.owner
     
     def can_be_edited_by(self, user):
+        if self.is_deleted:
+            return False
+        
         # Author only
         if not user or not user.is_authenticated:
             return False
         
         if user != self.author:
             return False
+        
+        if self.edited_at is not None:
+            return False # FIRST_EDIT_ONLY
         
         window = getattr(settings, 'COMMENT_EDIT_WINDOW_MINUTES', None)
         if window is None:
@@ -52,6 +58,10 @@ class Comment(models.Model):
     def mark_edited(self):
         if self.edited_at is None:
             self.edited_at = timezone.now()
+    
+    @property
+    def is_edited(self):
+        return self.edited_at is not None
     
     def soft_delete(self, *, by_user):
         self.is_deleted = True
