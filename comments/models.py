@@ -29,6 +29,9 @@ class Comment(models.Model):
     all_objects = CommentQuerySet.as_manager()  # Access including deleted
 
     def can_be_deleted_by(self, user):
+        if self.is_deleted:
+            return False
+        
         # Only author and task owner who can delete
         if not user or not user.is_authenticated:
             return False
@@ -61,7 +64,10 @@ class Comment(models.Model):
     
     @property
     def is_edited(self):
-        return self.edited_at is not None
+        return (
+            self.edited_at is not None
+            and not self.is_deleted
+            )
     
     def soft_delete(self, *, by_user):
         self.is_deleted = True

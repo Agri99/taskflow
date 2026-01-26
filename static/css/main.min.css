@@ -1,6 +1,8 @@
 .comment-edited {
     font-size: 0.85em;
-    color: #6b7280; /* neutral gray */
+    color: #6b7280;
     margin-left: 4px;
     font-style: italic;
 }
+.comment-item { margin-bottom: 0.75rem; }
+.comment-actions { margin-top: 0.25rem; }

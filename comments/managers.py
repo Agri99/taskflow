@@ -27,8 +27,7 @@ class CommentQuerySet(models.QuerySet):
         return self.filter(
             author=user, 
             created_at__gt=cutoff, 
-            deleted_at__isnull=True, 
-            edited_at__isnull=True
+            deleted_at__isnull=True
             )
     
     def purge_older_than(self, days):

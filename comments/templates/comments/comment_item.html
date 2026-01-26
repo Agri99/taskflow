@@ -1,0 +1,39 @@
+{% if not comment.is_deleted %}
+    <li class="comment-item" id="comment-{{ comment.pk }}">
+        <div class="comment_body">
+            <p class="comment-content">
+                    {{ comment.content }}
+            </p>
+                
+            <p class="comment-meta">
+                <strong>{{ comment.author.username }}</strong>
+                <small class="text-muted">
+                    <span>{{ comment.created_at }}</span>
+                    {% if comment.is_edited %}
+                        <span class="comment-edited" title="This comment was edited">
+                            (edited)
+                        </span>
+                    {% endif %}
+                </small>
+            </p>
+        </div>
+
+        {% if user == comment.author or user == comment.task.owner %}
+        <div class="comment-actions">
+            {% if can_edit %}
+                <a href="{% url 'tasks:comments:comment-edit' task_id=comment.task.pk pk=comment.pk %}">
+                    Edit
+                </a>
+            {% endif %}
+            {% if can_delete %}
+                <form action="{% url 'tasks:comments:comment-delete' task_id=comment.task.pk pk=comment.pk %}" 
+                method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+    </li>
+{% endif %}

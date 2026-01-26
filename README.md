@@ -23,43 +23,61 @@ This project is intentionally **backend-first**. There is no frontend UI yet; al
 * Task-detail access control via `get_queryset`
 
 ### Comments
-
-* Create, edit, and delete comments
-* **Soft delete** (comments are hidden, not removed immediately)
-* Role-based permissions:
-
-  * Author can edit within time window
-  * Author or task owner can delete
-* **Edit window enforcement** (configurable via settings)
-* Deleted comments are never editable
-
-### Query & model invariants
-
-* All permission rules live in **QuerySets / model methods**
-* Views rely on `get_queryset()` only (no duplicated permission logic)
-* Clear separation between:
-
-  * `active()` comments
-  * `editable_by(user)`
-  * `deletable_by(user)`
-
-### Background maintenance
-
-* Management command to **purge soft-deleted comments** older than N days
-* Safe by default, supports dry-run
-* Fully covered by tests
+- Create, edit, and delete comments
+- **Soft delete** (comments are hidden, not removed immediately)
+- Role-based permissions:
+  - Authors can edit **within a configurable edit window**
+  - Authors or task owners can delete
+- **FIRST_EDIT_ONLY**: the first successful edit sets `edited_at`; future edits do not overwrite it
+- Edited comments display an **“(edited)” badge** in the UI (derived from `edited_at`)
+- Deleted comments are never editable or shown in normal task views
 
 ---
 
-## 🧪 Testing philosophy
+## 🔐 Permissions Overview
 
-* Tests describe **behavior**, not implementation
-* Unauthorized access returns **404**, not redirects or permission leaks
-* Boundary conditions are explicitly tested:
+| Action | Comment Author | Task Owner | Other Users |
+|--------|----------------|------------|-------------|
+| Create comment | ✅ | ✅ | ❌ |
+| Edit comment (within window) | ✅ | ❌ | ❌ |
+| Delete comment | ✅ | ✅ | ❌ |
 
-  * Exactly at edit-window cutoff
-  * Deleted-but-recent comments
-  * Repeated purge runs (idempotency)
+Additional rules:
+- Deleted comments cannot be edited or deleted again  
+- Edited state is derived from `edited_at` (no duplicated boolean field)  
+- UI visibility is driven by flags computed in views, not templates  
+
+---
+
+## 🧠 Query & Model Design
+
+All permission rules live in **QuerySets and model methods**.
+
+### QuerySet helpers
+
+- `CommentQuerySet.active()` → visible (non-deleted) comments  
+- `CommentQuerySet.editable_by(user)` → comments editable by a user  
+- `CommentQuerySet.deletable_by(user)` → comments deletable by a user  
+
+### Model helpers
+
+- `Comment.can_be_edited_by(user)`  
+- `Comment.can_be_deleted_by(user)`  
+- `Comment.mark_edited()` → sets `edited_at` once  
+- `Comment.is_edited` → derived property (True if `edited_at` exists)
+
+Views **only** rely on these helpers — no duplicated logic.
+
+---
+
+## 🧪 Testing Philosophy
+
+- Tests describe **behavior**, not implementation details  
+- Boundary conditions are explicitly tested:
+  - Exact edit-window cutoff
+  - Attempted edits after deletion
+  - Re-edit attempts not overwriting `edited_at`
+- Unauthorized access returns **404** to prevent information leakage
 
 Run tests with:
 
@@ -108,15 +126,14 @@ Controls how long after creation a comment can be edited.
 
 ## 🚧 Roadmap (next)
 
-* Edited badge (`edited_at`, `edited_by`)
-* UI layer (templates) *after* backend is closed
 * CI pipeline (GitHub Actions)
 
 ---
 
 ## 📌 Notes
 
-This project is intentionally opinionated and strict. Some choices (like rejecting edits at the exact cutoff) are made to surface edge cases and enforce consistency.
+This project intentionally prioritizes backend correctness over frontend complexity.
+The UI is minimal and exists only to surface backend behavior already enforced at the model/query level.
 
 ---
 

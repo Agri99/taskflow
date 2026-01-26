@@ -56,6 +56,14 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs) # Get the original Context (contains the task object as 'task')
 
         # Attach related comment
-        context['comments'] = (Comment.objects.filter(task=self.object).select_related('author'))
+        comments_qs = (Comment.objects.filter(task=self.object).select_related('author', 'task'))
+        context['comments'] = [
+            {
+                'comment': comment,
+                'can_edit': comment.can_be_edited_by(self.request.user),
+                'can_delete': comment.can_be_deleted_by(self.request.user),
+            }
+            for comment in comments_qs
+        ]
         return context
     
