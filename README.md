@@ -2,35 +2,16 @@
 
 TaskFlow is a **Django backend-focused project** built to demonstrate real-world backend engineering practices: permissions enforced at the query layer, soft deletion, time-based edit rules, background cleanup jobs, and test-driven development.
 
-This project is intentionally **backend-first**. There is no frontend UI yet; all behavior is exercised and proven through unit tests and Django views.
+This project is intentionally **backend-first** — the focus is on robust server-side architecture, not front-end polish.
 
 ---
 
 ## 🎯 Project goals
 
-* Practice writing **production-style Django code**, not tutorial snippets
-* Enforce permissions at the **model/queryset level** (not scattered in views)
-* Avoid "vibe coding" by using **tests to drive behavior**
-* Build a portfolio-ready backend project that can later support a UI or API
-
----
-
-## ✅ Implemented features
-
-### Tasks
-
-* Task ownership model
-* Task-detail access control via `get_queryset`
-
-### Comments
-- Create, edit, and delete comments
-- **Soft delete** (comments are hidden, not removed immediately)
-- Role-based permissions:
-  - Authors can edit **within a configurable edit window**
-  - Authors or task owners can delete
-- **FIRST_EDIT_ONLY**: the first successful edit sets `edited_at`; future edits do not overwrite it
-- Edited comments display an **“(edited)” badge** in the UI (derived from `edited_at`)
-- Deleted comments are never editable or shown in normal task views
+- Write **production-style Django code**, not tutorial snippets  
+- Enforce permissions at the **model / queryset layer** (single source of truth)  
+- Use **tests to drive behavior** and protect invariants  
+- Provide a portfolio-ready backend blueprint that can later support a UI or API
 
 ---
 
@@ -49,24 +30,36 @@ Additional rules:
 
 ---
 
-## 🧠 Query & Model Design
+## 🚩 Project highlights
 
-All permission rules live in **QuerySets and model methods**.
+- Task model with ownership and secure `TaskDetailView` access  
+- Comment system with:
+  - Create / edit / soft-delete behavior
+  - **Edit window** enforcement (`COMMENTS_EDIT_WINDOW_MINUTES`)
+  - **FIRST_EDIT_ONLY** semantics — `edited_at` set once on first successful edit
+  - `(edited)` badge derived from `edited_at` (no boolean duplication)
+- Permission design:
+  - Model & QuerySet-driven helpers (`editable_by`, `deletable_by`, `can_be_*`)
+  - Views use `get_queryset()` and view-level flags for presentation
+- Background maintenance:
+  - `purge_comments` management command to permanently delete old soft-deleted records (supports `--dry-run`)
+- Developer experience:
+  - Dockerized dev environment (Postgres) with Docker Compose
+  - CI: GitHub Actions runs tests on push/PR
+  - Tests use `pytest` / `pytest-django` and cover edge cases
 
-### QuerySet helpers
+---
 
-- `CommentQuerySet.active()` → visible (non-deleted) comments  
-- `CommentQuerySet.editable_by(user)` → comments editable by a user  
-- `CommentQuerySet.deletable_by(user)` → comments deletable by a user  
+## 🧠 Architecture & tech stack
 
-### Model helpers
-
-- `Comment.can_be_edited_by(user)`  
-- `Comment.can_be_deleted_by(user)`  
-- `Comment.mark_edited()` → sets `edited_at` once  
-- `Comment.is_edited` → derived property (True if `edited_at` exists)
-
-Views **only** rely on these helpers — no duplicated logic.
+- **Framework:** Django  
+- **Database (dev/prod parity):** PostgreSQL (Docker), SQLite used for local dev/test if configured that way  
+- **Testing:** pytest + pytest-django, Django test client  
+- **DevOps:** Docker, Docker Compose, GitHub Actions (CI)  
+- **Design principles:**
+  - Single source of truth for permissions (QuerySets + Model methods)
+  - Templates remain presentation-only; business rules live on the server
+  - Fail-safe defaults: soft delete + purge, 404 over 403 to avoid leaking presence
 
 ---
 
@@ -158,28 +151,25 @@ Controls how long after creation a comment can be edited.
 
 ---
 
-## 🧠 Design decisions
+## 🧾 Lessons learned
 
-* **404 over 403**: Prevents information leakage
-* **QuerySet-driven permissions**: One source of truth
-* **Soft delete + background purge**: Safety and auditability
-* **FIRST_EDIT_ONLY edit tracking**: Preserves original edit timestamp
-* **Backend-first scope**: Clarity of learning and evaluation
+* **Model-driven rules scale better than view-driven checks.** Putting permissions in QuerySets prevents duplication and accidental leaks.
 
----
+* **Derived state is preferable to duplicate flags.** edited_at as the source of “edited” avoids drift and keeps tests simple.
 
-## 🚧 Roadmap (next)
+* **Tests catch integration surprises early.** Moving to an environment-based settings layout revealed template path and redirect assumptions that were otherwise hidden.
 
-* Production-ready Django settings
-* Static/media handling
-* Deployment configuration
+* **Containerized dev + CI = reproducible engineering.** Docker + GitHub Actions ensured the same tests run in dev and CI, surfacing env-specific issues quickly.
+
+* **Incremental, opinionated changes win.** Small, well-tested changes (UI-only or model-only) are safer than broad refactors.
 
 ---
 
 ## 📌 Notes
 
-This project intentionally prioritizes backend correctness over frontend complexity.
-The UI is minimal and exists only to surface backend behavior already enforced at the model/query level.
+* This repository intentionally prioritizes backend correctness over frontend completeness.
+
+* The UI is minimal and exists only to surface backend behavior already enforced at the model/query level.
 
 ---
 
