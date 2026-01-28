@@ -87,6 +87,7 @@ python manage.py test
 
 ---
 
+
 ## 🧹 Background purge command
 
 Permanently delete soft-deleted comments older than a given number of days.
@@ -105,6 +106,48 @@ python manage.py purge_comments --days 30
 
 ---
 
+## 🐳 Running with Docker
+
+TaskFlow can be run fully inside Docker with PostgreSQL.
+
+* Copy the example file and adjust values if needed:
+
+'''bash
+cp .env.example .env
+'''
+
+* Build containers:
+
+'''bash
+docker compose build
+'''
+
+* Start the application:
+
+'''bash
+docker compose up
+'''
+
+The app will be available at:
+
+'''bash
+http://localhost:8000/
+'''
+
+* Run test inside Docker
+
+'''bash
+docker compose run --rm web python manage.py test
+'''
+
+* Stop containers
+
+'''bash
+docker compose down
+'''
+
+---
+
 ## ⚙️ Key settings
 
 ```python
@@ -117,16 +160,19 @@ Controls how long after creation a comment can be edited.
 
 ## 🧠 Design decisions
 
-* **404 over 403**: prevents information leakage
-* **QuerySet-driven permissions**: one source of truth
-* **Soft delete + background purge**: safety and auditability
-* **Backend-only scope**: clarity of learning and evaluation
+* **404 over 403**: Prevents information leakage
+* **QuerySet-driven permissions**: One source of truth
+* **Soft delete + background purge**: Safety and auditability
+* **FIRST_EDIT_ONLY edit tracking**: Preserves original edit timestamp
+* **Backend-first scope**: Clarity of learning and evaluation
 
 ---
 
 ## 🚧 Roadmap (next)
 
-* CI pipeline (GitHub Actions)
+* Production-ready Django settings
+* Static/media handling
+* Deployment configuration
 
 ---
 

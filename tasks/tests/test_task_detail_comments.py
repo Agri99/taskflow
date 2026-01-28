@@ -44,5 +44,6 @@ class TaskDetailComments(TestCase):
 
         self.comment.refresh_from_db()
 
-        self.assertEqual(url.status_code, 200)
-        self.assertNotContains(url, self.comment.content)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.comment.content)
