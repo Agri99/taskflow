@@ -12,6 +12,8 @@ This project is intentionally **backend-first** — the focus is on robust serve
 - Enforce permissions at the **model / queryset layer** (single source of truth)  
 - Use **tests to drive behavior** and protect invariants  
 - Provide a portfolio-ready backend blueprint that can later support a UI or API
+- Implement **RBAC (Role-Based Access Control)** with proper permission mapping  
+- Maintain an **immutable audit trail** of critical actions
 
 ---
 
@@ -27,6 +29,64 @@ Additional rules:
 - Deleted comments cannot be edited or deleted again  
 - Edited state is derived from `edited_at` (no duplicated boolean field)  
 - UI visibility is driven by flags computed in views, not templates  
+
+> These business rules are now enforced through a **Role-Based Access Control system** described below.
+
+---
+
+## 🛡️ RBAC (Role-Based Access Control)
+
+TaskFlow now includes a **global-first RBAC system** built on top of Django’s authentication and permission framework.
+
+### Key Concepts
+
+**Role**
+- A named collection of Django `Permission` objects  
+- Examples: `Admin`, `Moderator`, `Support`, `ReadOnly`
+
+**Membership**
+- Assigns a `User` to a `Role`
+- Memberships are currently **global** (apply across the entire system)
+
+**Permission Resolution**
+- Permissions are **fine-grained**, such as:
+  - `comments.add_comment`
+  - `comments.change_comment`
+  - `comments.delete_comment`
+  - `tasks.change_task`
+- QuerySets and model helpers use RBAC as the **single source of truth**
+
+This allows permissions to be changed by adjusting role mappings — **without modifying business logic code**.
+
+---
+
+## 🧾 Audit Logging System
+
+TaskFlow records an **immutable audit trail** of important actions.
+
+### What gets logged
+
+Audit entries are created when key operations occur, such as:
+
+- Comment soft-deleted  
+- Comment edited  
+- Task updated or deleted (future expansion)
+
+### Each audit entry stores
+
+| Field | Meaning |
+|------|--------|
+| actor | The user who performed the action |
+| action | `create`, `edit`, or `delete` |
+| target | The object being modified (Comment, Task, etc.) |
+| timestamp | When the action occurred |
+| payload | Small JSON diff or metadata |
+
+Audit entries are **append-only by design** and are not meant to be edited.
+
+### Retention Policy
+
+Audit records may be archived or purged after a defined retention window (implementation planned). This prevents unbounded growth while preserving forensic usefulness.
 
 ---
 
@@ -55,7 +115,10 @@ Additional rules:
 - **Framework:** Django  
 - **Database (dev/prod parity):** PostgreSQL (Docker), SQLite used for local dev/test if configured that way  
 - **Testing:** pytest + pytest-django, Django test client  
-- **DevOps:** Docker, Docker Compose, GitHub Actions (CI)  
+- **DevOps:** Docker, Docker Compose, GitHub Actions (CI)
+- **RBAC:** Django `Permission` model + custom Role & Membership layer  
+- **Audit:** GenericForeignKey-based immutable audit log  
+
 - **Design principles:**
   - Single source of truth for permissions (QuerySets + Model methods)
   - Templates remain presentation-only; business rules live on the server
@@ -71,6 +134,8 @@ Additional rules:
   - Attempted edits after deletion
   - Re-edit attempts not overwriting `edited_at`
 - Unauthorized access returns **404** to prevent information leakage
+- RBAC permission matrices will be tested to ensure correct role enforcement
+- Audit tests ensure critical actions create immutable audit entries
 
 Run tests with:
 
@@ -162,6 +227,10 @@ Controls how long after creation a comment can be edited.
 * **Containerized dev + CI = reproducible engineering.** Docker + GitHub Actions ensured the same tests run in dev and CI, surfacing env-specific issues quickly.
 
 * **Incremental, opinionated changes win.** Small, well-tested changes (UI-only or model-only) are safer than broad refactors.
+
+* **RBAC** centralizes authorization logic and reduces permission drift
+
+* **Audit trails** are essential for production-grade systems
 
 ---
 

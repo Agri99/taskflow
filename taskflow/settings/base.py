@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
     'tasks.apps.TasksConfig',
-    'comments.apps.CommentsConfig'
+    'comments.apps.CommentsConfig',
+    'rbac.apps.RbacConfig'
 ]
 
 MIDDLEWARE = [
