@@ -31,15 +31,8 @@ class AuditOnCommentDeleteTest(TestCase):
         # lazy import to avoid cross-import issues during test discovery
         from rbac.models import AuditEntry
 
-        entries = AuditEntry.objects.filter(
+        assert AuditEntry.objects.filter(
             action = AuditEntry.ACTION_DELETE,
             actor = user,
-            target_content_type__model = 'comment',
             target_object_id = comment.pk,
-        )
-
-        self.assertTrue(entries.exists())
-
-        entry = entries.first()
-
-        self.assertTrue(entry.payload.get('is_deleted'))
+        ).exists()

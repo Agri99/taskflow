@@ -14,47 +14,28 @@ class Role(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True)
-    permissions = models.JSONField(default=list)
+    permissions = models.ManyToManyField('auth.Permission', related_name='rbac_roles', blank=True)
 
     def __str__(self):
         return self.name
     
-    def has_perm(self, perm: str) -> bool:
-        """
-        Return True if role grants 'perm'
-
-        'perm' should be a string like 'comment.delete' or 'task.edit'
-        """
-        return perm in (self.permissions or [])
-    
 
 class Membership(models.Model):
     """
-    Maps a user to a role, optionally scoped to a specific object.
-
-    If content_type/object_id are NULL, the membership is global.
-    This supports per-Task (or other object) RBAC by using a GenericForeignKey.
+    Assigns a user to a role (global scope).
     """
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memberships')
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='membership')
-
-    # Generic relation to scope membership (null -> global role)
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    content_object = GenericForeignKey('content_type', 'object_id')
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'role', 'content_type', 'object_id'], name='unique_membership')
-            ]
+        unique_together = ('user', 'role')
     
     def __str__(self):
-        scope = f" on {self.content_type}#{self.object_id}' if self.content_type else '(global)"
-        return f"{self.user} -> {self.role}{scope}"
+        return f"{self.user} -> {self.role}"
         
+
 class AuditEntryManager(models.Manager):
     def create_entry(self, *, actor, action, target, payload=None, timestamp=None):
         """
@@ -62,12 +43,11 @@ class AuditEntryManager(models.Manager):
         """
 
         ct = ContentType.objects.get_for_model(target)
-        obj_id = getattr(target, 'pk', None)
         return self.create(
             actor = actor,
             action = action,
             target_content_type = ct,
-            target_object_id = obj_id,
+            target_object_id = target.pk,
             payload = payload or {},
             timestamp = timestamp or timezone.now()
         )
