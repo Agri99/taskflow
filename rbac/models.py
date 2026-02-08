@@ -41,7 +41,6 @@ class AuditEntryManager(models.Manager):
         """
         Create an AuditEntry for 'target' (a Django model instance).
         """
-
         ct = ContentType.objects.get_for_model(target)
         return self.create(
             actor = actor,
@@ -63,7 +62,6 @@ class AuditEntry(models.Model):
     - timestamp: when the action occured
     - payload: small JSON diff or metadata (immutable by convention)
     """
-
     ACTION_CREATE = 'create'
     ACTION_EDIT = 'edit'
     ACTION_DELETE = 'delete'

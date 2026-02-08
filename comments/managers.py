@@ -9,13 +9,44 @@ class CommentQuerySet(models.QuerySet):
         return self.filter(is_deleted=False)
 
     def deletable_by(self, user):
+        # if not user or not user.is_authenticated:
+        #     return self.none()
+        
+        # return self.filter(
+        #     Q(author=user) | Q(task__owner=user) # Q is used to express the OR cleanly
+        # )
+    
+        """Return comments the 'user' is allowed to delete.
+        Rules:
+        - anonymous users -> none
+        - superusers -> all (subject to active filter on this queryset)
+        - owners and authors -> allowed
+        - users with RBAC permission 'comments.delete_comment' -> allowed
+        """
         if not user or not user.is_authenticated:
             return self.none()
         
-        return self.filter(
-            Q(author=user) | Q(task__owner=user) # Q is used to express the OR cleanly
-        )
-    
+        # Superuser bypass
+        if getattr(user, 'is_superuser', False):
+            return self.all()
+        
+        # Ownership-based permission (author or task owner)
+        qs = self.filter(Q(author=user))
+
+        # RBAC-based permission: if user has global 'comments.delete_comment'
+        try:
+            # Import locally to avoid import cycles at module import time
+            from rbac.services import user_has_perm
+
+            if user_has_perm(user, 'comments.delete_comment'):
+                return self.all()
+        except Exception:
+            # If RBAC isn't available for some reason, fall back to ownership
+            pass
+
+        return qs
+
+
     def editable_by(self, user):
         if not user or not user.is_authenticated:
             return self.none()

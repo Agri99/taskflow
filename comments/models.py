@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from tasks.models import Task
 from typing import ClassVar
 from .managers import CommentQuerySet, CommentManager
+from rbac.services import user_has_perm
 
 User = get_user_model()
 
@@ -25,18 +26,22 @@ class Comment(models.Model):
     )
     edited_at = models.DateTimeField(null=True, blank=True)
 
-    objects: ClassVar[CommentManager] = CommentManager()                  # Default Manager: active only
-    all_objects = CommentQuerySet.as_manager()  # Access including deleted
+    objects: ClassVar[CommentManager] = CommentManager()                    # Default Manager: active only
+    all_objects = CommentQuerySet.as_manager()                              # Access including deleted
 
     def can_be_deleted_by(self, user):
-        if self.is_deleted:
+        if not user or user.is_anonymous:
             return False
         
-        # Only author and task owner who can delete
-        if not user or not user.is_authenticated:
-            return False
+        # Ownership rule (existing behavior)
+        if self.author == user:
+            return True
         
-        return user == self.author or user == self.task.owner
+        # RBAC rule
+        if user_has_perm(user, "comments.delete_comment"):
+            return True
+        
+        return False
     
     def can_be_edited_by(self, user):
         if self.is_deleted:
