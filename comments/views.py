@@ -1,7 +1,7 @@
 from django.views.generic import CreateView, DeleteView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404, HttpResponseRedirect
 
 from .models import Comment
@@ -41,7 +41,7 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         # Allow deletion when the current user is either the comment author or the owner of the parent task.
-        return Comment.objects.deletable_by(self.request.user)
+        return Comment.objects.filter(deleted_at__isnull=True)
 
     def get_object(self):
         # Use the restricted queryset so that unauthorized looksup return 404
