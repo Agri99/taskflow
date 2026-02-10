@@ -9,8 +9,8 @@ class CommentQuerySet(models.QuerySet):
         return self.filter(is_deleted=False)
 
     def deletable_by(self, user):
-        # if not user or not user.is_authenticated:
-        #     return self.none()
+        if not user or not user.is_authenticated:
+            return self.none()
         
         # return self.filter(
         #     Q(author=user) | Q(task__owner=user) # Q is used to express the OR cleanly
