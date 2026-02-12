@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
-from django.forms.models import model_to_dict
+from django.core.exceptions import PermissionDenied
 
 from tasks.models import Task
 from typing import ClassVar
@@ -155,14 +155,15 @@ class Comment(models.Model):
             )
     
     def soft_delete(self, *, by_user):
+        if not self.can_be_deleted_by(by_user):
+            raise PermissionDenied("You do not have permission to delete this comment.")
+        
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.deleted_by = by_user
         self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
 
         try:
-            from rbac.models import AuditEntry
-
             AuditEntry.objects.create_entry(
                 actor = by_user,
                 action = AuditEntry.ACTION_DELETE,
