@@ -126,6 +126,16 @@ Audit records may be archived or purged after a defined retention window (implem
 
 ---
 
+## Security Architecture
+
+- Role-based access control (RBAC)
+- Model-level permission enforcement
+- Queryset-level filtering
+- Audit logging for create/edit/delete
+- Permission-gated audit visibility
+
+---
+
 ## 🧪 Testing Philosophy
 
 - Tests describe **behavior**, not implementation details  
