@@ -4,6 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
 
+from .querysets import AuditEntryQuerySet
+
 User = get_user_model()
 
 
@@ -37,6 +39,12 @@ class Membership(models.Model):
         
 
 class AuditEntryManager(models.Manager):
+    def get_queryset(self):
+        return AuditEntryQuerySet(self.model, using=self._db)
+    
+    def for_organization(self, organization):
+        return self.get_queryset().for_organization(organization)
+    
     def create_entry(self, *, actor, action, target, payload=None, timestamp=None):
         """
         Create an AuditEntry for 'target' (a Django model instance).
@@ -48,7 +56,8 @@ class AuditEntryManager(models.Manager):
             target_content_type = ct,
             target_object_id = target.pk,
             payload = payload or {},
-            timestamp = timestamp or timezone.now()
+            timestamp = timestamp or timezone.now(),
+            organization = target.organization
         )
     
 class AuditEntry(models.Model):
@@ -79,8 +88,10 @@ class AuditEntry(models.Model):
     target_object_id = models.PositiveIntegerField()
     target = GenericForeignKey('target_content_type', 'target_object_id')
 
-    timestamp = models.DateTimeField(default=timezone.now(), db_index=True)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
     payload = models.JSONField(default=dict, editable=False)
+
+    organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name='audit_logs')
 
     objects = AuditEntryManager()
 

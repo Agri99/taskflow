@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'tasks.apps.TasksConfig',
     'comments.apps.CommentsConfig',
-    'rbac.apps.RbacConfig'
+    'rbac.apps.RbacConfig',
+    'organizations.apps.OrganizationsConfig',
 ]
 
 MIDDLEWARE = [

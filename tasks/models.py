@@ -23,5 +23,7 @@ class Task(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name='tasks')
+
     def __str__(self):
         return self.title

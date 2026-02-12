@@ -27,6 +27,8 @@ class Comment(models.Model):
     )
     edited_at = models.DateTimeField(null=True, blank=True)
 
+    organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name='comments')
+
     objects: ClassVar[CommentManager] = CommentManager()                    # Default Manager: active only
     all_objects = CommentQuerySet.as_manager()                              # Access including deleted
 
@@ -36,6 +38,7 @@ class Comment(models.Model):
             task = task,
             author = author,
             content = content,
+            organization = task.organization,
         )
 
         AuditEntry.objects.create_entry(
@@ -173,6 +176,12 @@ class Comment(models.Model):
         except Exception:
             # Test will ensure happy-patch works, and ops can tighten error handling later.
             pass
+    
+    def save(self, *args, **kwargs):
+        if not self.organization_id and self.task_id:
+            self.organization = self.task.organization
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Comment by {self.author}'
