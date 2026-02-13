@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 
 from comments.models import Comment
 from tasks.models import Task
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -19,10 +20,20 @@ class CommentPurgeTests(TestCase):
             username = 'author',
             password = 'pass1234'
         )
+        
+        self.organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = self.owner,
+            organization = self.organization,
+        )
+        
         self.task = Task.objects.create(
-            title = 'Test Task',
-            description = 'Task description',
-            owner = self.owner
+            title = 'Task Test',
+            description = 'Task Description',
+            owner = self.owner,
+            organization = self.organization
         )
 
         # Create two deleted comments

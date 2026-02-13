@@ -24,31 +24,25 @@ def audit_for_user(user, *, requester):
 
     if not user or user.is_anonymous:
         return AuditEntry.objects.none()
-    
-    org_id = _org_id_for_user(requester)
-    
-    return AuditEntry.objects.filter(actor=user, organization_id=org_id).order_by('-timestamp')
+        
+    return AuditEntry.objects.for_user(requester).filter(actor=user).order_by('-timestamp')
 
 def audit_for_object(obj, *, requester):
     # Return audit entries related to a spesific object.
     _require_audit_view(requester)
 
-    org_id = _org_id_for_user(requester)
     ct = ContentType.objects.get_for_model(obj)
 
-    return AuditEntry.objects.filter(
+    return AuditEntry.objects.for_user(requester).filter(
         target_content_type=ct,
         target_object_id=obj.pk,
-        organization_id = org_id
     ).order_by('-timestamp')
 
 def audit_by_action(action, requester):
     # Return audit entries filtered by action type.
     _require_audit_view(requester)
 
-    org_id = _org_id_for_user(requester)
-
-    return AuditEntry.objects.filter(action=action, organization_id=org_id).order_by('-timestamp')
+    return AuditEntry.objects.for_user(requester).filter(action=action).order_by('-timestamp')
 
 def get_audit_entries_for_user(requester):
     if not requester.has_perm('rbac.view_auditentry'):

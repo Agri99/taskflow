@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.conf import settings
 
 from rbac.services import user_has_perm
+from rbac.managers import OrgScopedManager
 
 class CommentQuerySet(models.QuerySet):
     def active(self):
@@ -45,13 +46,13 @@ class CommentQuerySet(models.QuerySet):
             is_deleted=True, deleted_at__lt=cutoff
         )
     
-class CommentManager(models.Manager):
+class CommentManager(OrgScopedManager):
+    """Default Manager: active only + org-scoped via OrgScopedManager."""
     def get_queryset(self):
-        # Default: return only active comments.
         qs = CommentQuerySet(self.model, using=self._db)
-        # Toggle behavior by setting.COMMENTS_ACTIVE_ONLY
         return qs.active() if getattr(settings, 'COMMENTS_ACTIVE_ONLY', True) else qs
     
+    # perserve helpers by delegating to the queryset
     def deletable_by(self, user):
         return self.get_queryset().deletable_by(user)
     

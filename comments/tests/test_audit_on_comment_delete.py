@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from tasks.models import Task
 from comments.models import Comment
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -14,10 +15,20 @@ class AuditOnCommentDeleteTest(TestCase):
             username = 'audittest',
             password = 'password'
         )
+
+        organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = user,
+            organization = organization,
+        )
+        
         task = Task.objects.create(
-            title = 'Test Task',
+            title = 'Task Test',
             description = 'Task Description',
-            owner = user
+            owner = user,
+            organization = organization
         )
         comment = Comment.objects.create(
             task = task,

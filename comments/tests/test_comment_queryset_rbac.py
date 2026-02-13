@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from tasks.models import Task
 from comments.models import Comment
 from rbac.models import Role, Membership
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -20,10 +21,19 @@ class CommentQuerysetRBACTests(TestCase):
             username = 'other',
             password = 'pass1234'
         )
+        organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = owner,
+            organization = organization,
+        )
+        
         task = Task.objects.create(
-            title = 'Test Task',
+            title = 'Task Test',
             description = 'Task Description',
-            owner = owner
+            owner = owner,
+            organization = organization
         )
 
         c1 = Comment.objects.create(
@@ -51,10 +61,20 @@ class CommentQuerysetRBACTests(TestCase):
             username = 'Moderator',
             password = 'pass1234'
         )
+        
+        organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = owner,
+            organization = organization,
+        )
+        
         task = Task.objects.create(
-            title = 'Test Task',
+            title = 'Task Test',
             description = 'Task Description',
-            owner = owner
+            owner = owner,
+            organization = organization
         )
 
         c1 = Comment.objects.create(

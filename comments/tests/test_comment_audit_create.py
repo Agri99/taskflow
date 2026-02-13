@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from tasks.models import Task
 from comments.models import Comment
 from rbac.models import AuditEntry
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -14,11 +15,22 @@ class CommentCreateAuditTests(TestCase):
             username = 'Owner',
             password = 'pass1234'
         )
-        task = Task.objects.create(
-            title = 'Test Task',
-            description = 'Task Description',
-            owner = user
+
+        organization = Organization.objects.create(
+            name = 'Test Org'
         )
+        MembershipProfile.objects.create(
+            user = user,
+            organization = organization,
+        )
+
+        task = Task.objects.create(
+            title = 'Task Test',
+            description = 'Task Description',
+            owner = user,
+            organization = organization
+        )
+
         comment = Comment.create_with_audit(
             task = task,
             author = user,

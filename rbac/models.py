@@ -4,7 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
 
-from .querysets import AuditEntryQuerySet
+from .managers import AuditEntryManager
 
 User = get_user_model()
 
@@ -36,29 +36,6 @@ class Membership(models.Model):
     
     def __str__(self):
         return f"{self.user} -> {self.role}"
-        
-
-class AuditEntryManager(models.Manager):
-    def get_queryset(self):
-        return AuditEntryQuerySet(self.model, using=self._db)
-    
-    def for_organization(self, organization):
-        return self.get_queryset().for_organization(organization)
-    
-    def create_entry(self, *, actor, action, target, payload=None, timestamp=None):
-        """
-        Create an AuditEntry for 'target' (a Django model instance).
-        """
-        ct = ContentType.objects.get_for_model(target)
-        return self.create(
-            actor = actor,
-            action = action,
-            target_content_type = ct,
-            target_object_id = target.pk,
-            payload = payload or {},
-            timestamp = timestamp or timezone.now(),
-            organization = target.organization
-        )
     
 class AuditEntry(models.Model):
     """

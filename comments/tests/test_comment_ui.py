@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 
 from tasks.models import Task
 from comments.models import Comment
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -20,10 +21,20 @@ class CommentUIVisibilityTest(TestCase):
             username = 'author',
             password = 'pass1234'
         )
+        
+        self.organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = self.owner,
+            organization = self.organization,
+        )
+        
         self.task = Task.objects.create(
-            title = 'Test Task',
+            title = 'Task Test',
             description = 'Task Description',
-            owner = self.owner
+            owner = self.owner,
+            organization = self.organization
         )
         self.comment = Comment.objects.create(
             task = self.task,

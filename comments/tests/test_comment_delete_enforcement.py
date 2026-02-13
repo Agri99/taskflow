@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 
 from tasks.models import Task
 from comments.models import Comment
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -19,10 +20,19 @@ def test_soft_delete_blocked_without_permission():
         password = 'pass1234'
     )
 
+    organization = Organization.objects.create(
+        name = 'Test Org'
+    )
+    MembershipProfile.objects.create(
+        user = owner,
+        organization = organization,
+    )
+        
     task = Task.objects.create(
-        title = 'Test Task',
+        title = 'Task Test',
         description = 'Task Description',
-        owner = owner
+        owner = owner,
+        organization = organization
     )
 
     comment = Comment.objects.create(

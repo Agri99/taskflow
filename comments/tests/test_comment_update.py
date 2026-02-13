@@ -7,6 +7,7 @@ from datetime import timedelta
 
 from tasks.models import Task
 from comments.models import Comment
+from organizations.models import Organization, MembershipProfile
 
 User = get_user_model()
 
@@ -25,10 +26,23 @@ class CommentUpdatePermissionTests(TestCase):
             password = 'pass1234'
         )
 
+        self.organization = Organization.objects.create(
+            name = 'Test Org'
+        )
+        MembershipProfile.objects.create(
+            user = self.owner,
+            organization = self.organization,
+        )
+        MembershipProfile.objects.create(
+            user = self.author,
+            organization = self.organization,
+        )
+        
         self.task = Task.objects.create(
-            title = 'Task',
-            description = 'Test Description',
-            owner = self.owner
+            title = 'Task Test',
+            description = 'Task Description',
+            owner = self.owner,
+            organization = self.organization
         )
 
         self.comment = Comment.objects.create(
