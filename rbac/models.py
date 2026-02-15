@@ -9,6 +9,16 @@ from .managers import AuditEntryManager
 User = get_user_model()
 
 
+class OrgModel(models.Model):
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name='%(class)ss'
+    )
+
+    class Meta:
+        abstract = True
+
 class Role(models.Model):
     """
     A named role that carries a list of permission strings.
@@ -37,7 +47,7 @@ class Membership(models.Model):
     def __str__(self):
         return f"{self.user} -> {self.role}"
     
-class AuditEntry(models.Model):
+class AuditEntry(OrgModel):
     """
     Immutable audit record for important actions.
 
@@ -78,4 +88,3 @@ class AuditEntry(models.Model):
         
     def __str__(self):
         return f"AuditEntry({self.action}) on {self.target_content_type}#{self.target_object_id} by {self.actor} @ {self.timestamp}"
-    

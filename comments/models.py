@@ -9,12 +9,12 @@ from tasks.models import Task
 from typing import ClassVar
 from .managers import CommentQuerySet, CommentManager
 from rbac.services import user_has_perm
-from rbac.models import AuditEntry
+from rbac.models import AuditEntry, OrgModel
 
 User = get_user_model()
 
 
-class Comment(models.Model):
+class Comment(OrgModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()

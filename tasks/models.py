@@ -2,11 +2,12 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from organizations.querysets import OrgScopedManager
+from rbac.models import OrgModel
 
 User = get_user_model()
 
 
-class Task(models.Model):
+class Task(OrgModel):
     STATUS_CHOICES = [
         ('T', 'todo'),
         ('I', 'in_progress'),
