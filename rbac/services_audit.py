@@ -8,15 +8,6 @@ from rbac.services import user_has_perm
 def _require_audit_view(user):
     if not user_has_perm(user, 'rbac.view_auditentry'):
         raise PermissionDenied("You do not have permission to view audit logs.")
-    
-def _org_id_for_user(user):
-    if not user or user.is_anonymous:
-        return None
-    
-    if hasattr(user, 'org_profile'):
-        return None
-    
-    return user.org_profile.organization_id
 
 def audit_for_user(user, *, requester):
     # Return audit entries performed by a spesific user.

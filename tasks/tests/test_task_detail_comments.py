@@ -26,6 +26,10 @@ class TaskDetailComments(TestCase):
             user = self.owner,
             organization = self.organization,
         )
+        MembershipProfile.objects.create(
+            user = self.author,
+            organization = self.organization,
+        )
 
         self.task = Task.objects.create(
             title = 'Task Test',
@@ -37,6 +41,7 @@ class TaskDetailComments(TestCase):
         self.comment = Comment.objects.create(
             task = self.task,
             author = self.author,
+            organization = self.organization,
             content = 'Task Comment'
         )
 

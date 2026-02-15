@@ -3,7 +3,7 @@ from django.db import models
 
 class OrgScoopedQuerySet(models.QuerySet):
     def for_user(self, user):
-        if not user or user.is_anonmous:
+        if not user or user.is_anonymous:
             return self.none()
         
         if not hasattr(user, 'org_profile'):

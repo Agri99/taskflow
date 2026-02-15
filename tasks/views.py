@@ -14,6 +14,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user # Add user info
+        form.instance.organization = self.request.user.org_profile.organization
         return super().form_valid(form) # Save and Redirect into success_url
     
 class TaskUpdateView(OwnerRequiredMixin, UpdateView):
@@ -28,7 +29,7 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('tasks:task-list')
 
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        return Task.objects.for_user(self.request.user).filter(owner=self.request.user)
 
 class TaskListView(LoginRequiredMixin, ListView):
     model = Task
@@ -37,7 +38,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Any authenticated user can see tasks
-        return Task.objects.all()
+        return Task.objects.for_user(self.request.user)
     
 class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
@@ -50,13 +51,13 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         return Task.objects.filter(owner=self.request.user)
         '''
         # Detail view follows the same visibillity rule as the list
-        return Task.objects.all()
+        return Task.objects.for_user(self.request.user)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs) # Get the original Context (contains the task object as 'task')
 
         # Attach related comment
-        comments_qs = (Comment.objects.filter(task=self.object).select_related('author', 'task'))
+        comments_qs = (Comment.objects.for_user(self.request.user).filter(task=self.object).select_related('author', 'task'))
         context['comments'] = [
             {
                 'comment': comment,

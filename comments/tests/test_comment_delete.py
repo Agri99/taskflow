@@ -29,6 +29,14 @@ class CommentDeletePermissionTests(TestCase):
             user = self.owner,
             organization = self.organization,
         )
+        MembershipProfile.objects.create(
+            user = self.author,
+            organization = self.organization,
+        )
+        MembershipProfile.objects.create(
+            user = self.other,
+            organization = self.organization,
+        )
         
         self.task = Task.objects.create(
             title = 'Task Test',
@@ -40,6 +48,7 @@ class CommentDeletePermissionTests(TestCase):
         self.comment = Comment.objects.create(
             task = self.task,
             author = self.author,
+            organization = self.organization,
             content = 'Test Comment'
         )
 
