@@ -1,19 +1,8 @@
-from django.db import models
-from .querysets import AuditEntryQuerySet, OrgScoopedQuerySet
+from .querysets import AuditEntryQuerySet
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from organizations.querysets import OrgScopedManager
 
-
-class OrgScopedManager(models.Manager):
-    """Manager that uses OrgScopedQuerySet and exposes .for_user(user)"""
-    def get_queryset(self):
-        return OrgScoopedQuerySet(self.model, using=self._db)
-    
-    def for_user(self, user):
-        return self.get_queryset().for_user(user)
-    
-    def for_organization(self, organization):
-        return self.get_queryset().for_organization(organization)
 
 class AuditEntryManager(OrgScopedManager):
     """Manager for AuditEntry: keep create_entry factory + org scoping."""

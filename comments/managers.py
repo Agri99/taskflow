@@ -5,9 +5,10 @@ from datetime import timedelta
 from django.conf import settings
 
 from rbac.services import user_has_perm
-from rbac.managers import OrgScopedManager, OrgScoopedQuerySet
+from organizations.querysets import OrgScopedManager, OrgScopedQuerySet
 
-class CommentQuerySet(OrgScoopedQuerySet):
+
+class CommentQuerySet(OrgScopedQuerySet):
     def active(self):
         return self.filter(is_deleted=False)
 

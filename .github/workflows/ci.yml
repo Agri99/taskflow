@@ -24,6 +24,7 @@ jobs:
           --health-retries=5
 
     env:
+      DJANGO_ENV: prod
       DJANGO_SECRET_KEY: test-secret-key
       DJANGO_DEBUG: False
       DB_NAME: test_db
