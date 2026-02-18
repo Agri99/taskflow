@@ -27,11 +27,11 @@ jobs:
       DJANGO_ENV: prod
       DJANGO_SECRET_KEY: test-secret-key
       DJANGO_DEBUG: False
-      DB_NAME: test_db
-      DB_USER: test_user
-      DB_PASSWORD: test_pass
-      DB_HOST: localhost
-      DB_PORT: 5432
+      POSTGRES_DB: test_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
 
     steps:
       - name: Checkout code
