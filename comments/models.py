@@ -82,9 +82,6 @@ class Comment(OrgModel):
         if user != self.author:
             return False
         
-        if self.edited_at is not None:
-            return False # FIRST_EDIT_ONLY
-        
         window = getattr(settings, 'COMMENT_EDIT_WINDOW_MINUTES', None)
         if window is None:
             return True # Unlimited editing if disabled
@@ -136,7 +133,6 @@ class Comment(OrgModel):
 
         self.content = new_content
         self.save(update_fields=['content'])
-        self.mark_edited()
 
         changes = self.diff_against(old)
         if changes:

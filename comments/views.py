@@ -98,6 +98,7 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
             new_content = new_content,
             by_user = self.request.user
         )
+        self.object.mark_edited()
         self.object.save(update_fields=['edited_at'])
         return HttpResponseRedirect(self.get_success_url())
     
