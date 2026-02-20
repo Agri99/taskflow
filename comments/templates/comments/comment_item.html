@@ -18,7 +18,7 @@
             </p>
         </div>
 
-        {% if user == comment.author or user == comment.task.owner %}
+        {# Show actions if user has ANY permission (view decides, template obeys) #}
         <div class="comment-actions">
             {% if can_edit %}
                 <a href="{% url 'tasks:comments:comment-edit' task_id=comment.task.pk pk=comment.pk %}">
@@ -33,7 +33,6 @@
                 </form>
             {% endif %}
         </div>
-        {% endif %}
         
     </li>
 {% endif %}
