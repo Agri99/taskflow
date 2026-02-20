@@ -136,6 +136,7 @@ class Comment(OrgModel):
 
         self.content = new_content
         self.save(update_fields=['content'])
+        self.mark_edited()
 
         changes = self.diff_against(old)
         if changes:

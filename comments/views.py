@@ -28,10 +28,13 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
             raise Http404
         '''
 
-        form.instance.author = self.request.user
-        form.instance.organization = self.request.user.org_profile.organization
-        form.instance.task = task
-        return super().form_valid(form)
+        content = form.cleaned_data['content']
+        self.object = Comment.create_with_audit(
+            task = task,
+            author = self.request.user,
+            content = content,
+        )
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse_lazy('tasks:task-detail', kwargs={'pk': self.object.task.pk})
@@ -89,12 +92,14 @@ class CommentUpdateView(LoginRequiredMixin, UpdateView):
         return comment
     
     def form_valid(self, form):
-        # The super().form_valid will set self.object to the updated object
-        response = super().form_valid(form)
+        new_content = form.cleaned_data['content']
         # Mark edited once only
-        self.object.mark_edited()
+        self.object.apply_edit(
+            new_content = new_content,
+            by_user = self.request.user
+        )
         self.object.save(update_fields=['edited_at'])
-        return response
+        return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
         return reverse_lazy(
