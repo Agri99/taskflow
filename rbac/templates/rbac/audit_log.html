@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="audit-container">
+    <h1>Audit Log</h1>
+
+    <!-- Filter Form -->
+    <div class="filters">
+        <form method="get" class=filter-form>
+            <div class="filter-row">
+                <input type="text" name="search" placeholder="Search by username or content..." value="{{ current_search }}">
+                
+                <select name="action">
+                    <option value="">All Users</option>
+                    {% for actor in actors %}
+                    <option value="{{ actor.id }}" {% if current_actor|add:"0" == actor.id %}selected{% endif %}>
+                        {{ actor.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <select name="target_type">
+                    <option value="">All Types</option>
+                    {% for ct in target_types %}
+                    <option value="{{ ct.model }}" {% if current_target_type == ct.model %}selected{% endif %}>
+                        {{ ct.model|capfirst }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <button type="submit">Filter</button>
+                <a href="{% url 'rbac:audit-log' %}" class="clear-btn">Clear</a>
+                
+            </div>
+        </form>
+    </div>
+    
+    <!-- Result -->
+    <div class="results-info">
+        Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }} entries
+    </div>
+    
+    <!-- Audit Table -->
+    <table class="audit-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Dretails</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in audit_entries %}
+            <tr class="audit-row action-{{ entry.action }}">
+                <td class="timestamp">{{ entry.timestamp|date:"Y-m-d H:i:s" }}</td>
+                <td class="actor">
+                    {% if entry.actor %}
+                    {{ entry.actor.username }}
+                    {% else %}
+                    <em>System</em>
+                    {% endif %}
+                </td>
+                <td class="action">
+                    <spam class="badge badge-{{ entry.action }}">
+                        {{ entry.get_action_display }}
+                    </spam>
+                </td>
+                <td class="target">
+                    {{ entry.get_action_display }}
+                </td>
+                <td class="payload">
+                    {% if entry.payload %}
+                    <details>
+                        <summary>View details</summary>
+                        <pre>{{ entry.payload|pprint }}</pre>
+                    </details>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="no-result">No audit entries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Audit Table -->
+    {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_action %}&action={{ current_action }}{% endif %}{% if current_actor %}&actor={{ current_actor }}{% endif %}{% if current_target_type %}&target_type={{ current_target_type }}{% endif %}">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_action %}&action={{ current_action }}{% endif %}{% if current_actor %}&actor={{ current_actor }}{% endif %}{% if current_target_type %}&target_type={{ current_target_type }}{% endif %}">Previous</a>
+            {% endif %}
+
+            <span class="current-page">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_action %}&action={{ current_action }}{% endif %}{% if current_actor %}&actor={{ current_actor }}{% endif %}{% if current_target_type %}&target_type={{ current_target_type }}{% endif %}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_action %}&action={{ current_action }}{% endif %}{% if current_actor %}&actor={{ current_actor }}{% endif %}{% if current_target_type %}&target_type={{ current_target_type }}{% endif %}">Last &raquo;</a>
+            {% endif %}
+
+        </div>
+    {% endif %}
+
+</div>
+{% endblock content %}

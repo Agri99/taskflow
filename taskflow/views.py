@@ -14,5 +14,6 @@ def index(request):
         <ul>
             <li>/admin/ — Django admin</li>
             <li>/tasks/ — Task-related views</li>
+            <li>/rbac/audit/ — Audit-entry logs views</li>
         </ul>
     """)

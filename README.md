@@ -36,59 +36,160 @@ Additional rules:
 
 ## 🛡️ RBAC (Role-Based Access Control)
 
-TaskFlow now includes a **global-first RBAC system** built on top of Django’s authentication and permission framework.
+TaskFlow implements a production-grade RBAC system that separates business rules from administrative permissions.
 
-### Key Concepts
+## 🛡️ RBAC (Role-Based Access Control)
 
-**Role**
-- A named collection of Django `Permission` objects  
-- Examples: `Admin`, `Moderator`, `Support`, `ReadOnly`
+TaskFlow implements a production-grade RBAC system that separates business rules from administrative permissions.
 
-**Membership**
-- Assigns a `User` to a `Role`
-- Memberships are currently **global** (apply across the entire system)
+### Architecture
 
-**Permission Resolution**
-- Permissions are **fine-grained**, such as:
-  - `comments.add_comment`
-  - `comments.change_comment`
-  - `comments.delete_comment`
-  - `tasks.change_task`
-- QuerySets and model helpers use RBAC as the **single source of truth**
+**Core Models:**
+- **Role**: Named collection of Django permissions (e.g., "Moderator", "Auditor")
+- **Membership**: Assigns users to roles (many-to-many through table)
+- **Permissions**: Fine-grained Django permissions (e.g., `comments.delete_comment`)
 
-This allows permissions to be changed by adjusting role mappings — **without modifying business logic code**.
+**Permission Resolution:**
+```python
+# Business Rule (hardcoded, always applies)
+if comment.author == user:
+    return True  # Authors can always delete their own comments
+
+# RBAC Permission (dynamic, role-based)
+if user_has_perm(user, 'comments.delete_comment'):
+    return True  # Moderators can delete any comment
+```
+
+### Key Features
+
+✅ **Flexible role assignment** - Change permissions without code changes
+✅ **Single source of truth** - Permissions checked in model layer
+✅ **Organization-scoped** - Each org has isolated data
+✅ **Superuser override** - Admins can access cross-org audit logs
+✅ **Integration with business rules** - RBAC supplements, doesn't replace, ownership logic
+
+### Setting Up Roles
+
+**1. Create a Role (via Django admin):**
+```
+/admin/rbac/role/add/
+- Name: Moderator
+- Slug: moderator (auto-filled)
+- Permissions: Select "Can delete comment"
+```
+
+**2. Assign Role to User:**
+```
+/admin/rbac/membership/add/
+- User: Select user
+- Role: Select "Moderator"
+```
+
+**3. Verify:**
+User can now delete ANY comment in their organization (not just their own).
+
+### Example Roles
+
+**Moderator:**
+- `comments.delete_comment` - Remove inappropriate comments
+- `rbac.view_auditentry` - Monitor user actions
+
+**Auditor:**
+- `rbac.view_auditentry` - Read-only access to audit logs
+
+**Content Manager:**
+- `tasks.add_task`
+- `tasks.change_task`
+- `tasks.delete_task`
+- `comments.delete_comment`
+
+### Testing RBAC
+
+Run the integration test:
+```bash
+pytest rbac/tests/test_rbac_integration.py -v
+```
+
+Or test manually:
+1. Create a moderator role with delete permissions
+2. Assign role to a test user
+3. Log in as that user
+4. Delete another user's comment - should succeed
+5. Check audit log - entry should show the deletion
 
 ---
 
 ## 🧾 Audit Logging System
 
-TaskFlow records an **immutable audit trail** of important actions.
+TaskFlow records an **immutable audit trail** of all critical actions.
 
-### What gets logged
+### What Gets Logged
 
-Audit entries are created when key operations occur, such as:
+Audit entries are automatically created for:
+- ✅ Comment created (`Comment.create_with_audit()`)
+- ✅ Comment edited (`comment.apply_edit()`)
+- ✅ Comment deleted (`comment.soft_delete()`)
 
-- Comment soft-deleted  
-- Comment edited  
-- Task updated or deleted (future expansion)
+Future: Task updates, role changes, membership changes
 
-### Each audit entry stores
+### Audit Entry Structure
 
-| Field | Meaning |
-|------|--------|
-| actor | The user who performed the action |
-| action | `create`, `edit`, or `delete` |
-| target | The object being modified (Comment, Task, etc.) |
-| timestamp | When the action occurred |
-| payload | Small JSON diff or metadata |
+| Field | Description |
+|-------|-------------|
+| `actor` | User who performed the action (null for system actions) |
+| `action` | One of: `create`, `edit`, `delete` |
+| `target` | The object that was modified (GenericForeignKey) |
+| `timestamp` | When the action occurred (indexed) |
+| `payload` | JSON metadata (e.g., `{"old": "...", "new": "..."}`) |
+| `organization` | Organization scope (for data isolation) |
 
-Audit entries are **append-only by design** and are not meant to be edited.
+### Viewing Audit Logs
+
+**Option 1: Django Admin (Read-Only)**
+```
+/admin/rbac/auditentry/
+```
+- Filter by action, date, target type, organization
+- Search by username or payload content
+- Immutable (cannot edit or delete entries)
+
+**Option 2: Custom Audit Viewer**
+```
+/rbac/audit/
+```
+- User-friendly interface with advanced filtering
+- Requires `rbac.view_auditentry` permission
+- Organization-scoped (users only see their org's logs)
+- Superusers see all logs across all organizations
+
+**Filtering options:**
+- By action type (create/edit/delete)
+- By actor (which user performed the action)
+- By target type (comment/task/etc.)
+- Text search in payload or usernames
+- Paginated (50 entries per page)
+
+### Security & Immutability
+
+**Design principles:**
+- Audit entries use `editable=False` in admin
+- No `add_auditentry` or `change_auditentry` permissions granted to any role
+- `delete_auditentry` disabled for all users
+- Append-only by design
+
+**Enforcement:**
+- Django admin configured with `has_add_permission = False`
+- Django admin configured with `has_delete_permission = False`
+- Template fields set to `readonly_fields` for all columns
 
 ### Retention Policy
 
-Audit records may be archived or purged after a defined retention window (implementation planned). This prevents unbounded growth while preserving forensic usefulness.
+**Current:** Audit logs are retained indefinitely
 
----
+**Future consideration:** Implement archival/purge policy
+- Archive logs older than X months to cold storage
+- Purge logs older than Y years (with legal compliance review)
+- Maintain forensic usefulness while preventing unbounded growth
 
 ## 🚩 Project highlights
 
@@ -241,6 +342,16 @@ Controls how long after creation a comment can be edited.
 * **RBAC** centralizes authorization logic and reduces permission drift
 
 * **Audit trails** are essential for production-grade systems
+
+* **RBAC centralizes authorization** - Roles can be modified without touching code, making permission management scalable
+
+* **Audit trails require immutability** - Admin interfaces must be carefully configured to prevent tampering with historical records
+
+* **Template logic should trust the backend** - Permission checks belong in models/views, not templates. The template should display what the view decides, not make authorization decisions itself
+
+* **Organization scoping is a cross-cutting concern** - QuerySet helpers that apply organization filtering consistently prevent data leakage and simplify security
+
+* **Superuser access requires special handling** - Production systems need privileged accounts that can operate across organizational boundaries for support and debugging
 
 ---
 

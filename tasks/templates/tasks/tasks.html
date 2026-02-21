@@ -6,13 +6,13 @@
 
 {% for task in tasks %}
 
-<li>
-    {{ task.title }}
-    <a href="{% url 'tasks:task-edit' task.pk %}">Edit</a>
-    <a href="{% url 'tasks:task-delete' task.pk %}">Delete</a>
-</li>
+    <li>
+        <a href="{% url 'tasks:task-detail' task.pk %}">{{ task.title }}</a>
+        <a href="{% url 'tasks:task-edit' task.pk %}">Edit</a>
+        <a href="{% url 'tasks:task-delete' task.pk %}">Delete</a>
+    </li>
 
-<a href="{% url 'tasks:task-create' %}"> + New Task </a>
+    <a href="{% url 'tasks:task-create' %}"> + New Task </a>
 
 {% endfor %}
 
