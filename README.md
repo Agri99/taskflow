@@ -4,6 +4,8 @@ TaskFlow is a **Django backend-focused project** built to demonstrate real-world
 
 This project is intentionally **backend-first** — the focus is on robust server-side architecture, not front-end polish.
 
+This is designed as an internal tool where admins provision accounts. For public-facing deployment, a registration system would be added.
+
 ---
 
 ## 🎯 Project goals
