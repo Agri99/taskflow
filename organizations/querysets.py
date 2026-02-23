@@ -2,6 +2,9 @@ from django.db import models
 
 
 class OrgScopedQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_deleted=False)
+
     """QuerySet helper to scope queries to a user's organization."""
     def for_user(self, user):
         # Return queryset scoped to the user's organization (defensive).
