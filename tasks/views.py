@@ -38,7 +38,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Any authenticated user can see tasks
-        return Task.objects.for_user(self.request.user)
+        return Task.objects.for_user(self.request.user).active()
     
 class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
