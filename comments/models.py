@@ -82,7 +82,7 @@ class Comment(OrgModel):
         if user != self.author:
             return False
         
-        window = getattr(settings, 'COMMENT_EDIT_WINDOW_MINUTES', None)
+        window = getattr(settings, 'COMMENTS_EDIT_WINDOW_MINUTES', None)
         if window is None:
             return True # Unlimited editing if disabled
         
@@ -127,7 +127,7 @@ class Comment(OrgModel):
     def apply_edit(self, *, new_content, by_user):
         """Apply edit to comment and create audit entry with diff."""
         if not self.can_be_edited_by(by_user):
-            raise PermissionError("User cannot edit this comment")
+            raise PermissionDenied("User cannot edit this comment")
         
         old = type(self).objects.get(pk=self.pk) # snapshot before change
 
