@@ -1,6 +1,3 @@
-from django.contrib.auth.models import Permission
-
-
 def get_user_permissions(user):
     """
     Return a set of permission codenames granted via RBAC roles.
