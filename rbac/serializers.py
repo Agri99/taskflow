@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import AuditEntry
 
 
-class RBACSerializer(serializers.ModelSerializer):
+class AuditEntrySerializer(serializers.ModelSerializer):
     actor_username = serializers.SerializerMethodField()
 
     class Meta:
