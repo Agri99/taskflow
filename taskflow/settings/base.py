@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_filters',
 ]
 
 REST_FRAMEWORK = {
@@ -67,7 +68,10 @@ REST_FRAMEWORK = {
         'anon': '20/hour',
         'user': '1000/day',
     },
-    'EXCEPTION_HANDLER': 'taskflow.exceptions.custom_exception_handler'
+    'EXCEPTION_HANDLER': 'taskflow.exceptions.custom_exception_handler',
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ]
 }
 
 MIDDLEWARE = [

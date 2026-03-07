@@ -2,14 +2,20 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Task
 from .serializers import TaskSerializer
+from .filters import TaskFilter
 
 
 class TaskListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TaskSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status', 'priority']
+    filterset_class = TaskFilter
 
     def get_queryset(self):
         if self.request.user.is_superuser:
