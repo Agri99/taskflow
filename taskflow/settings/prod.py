@@ -3,6 +3,10 @@ import os
 
 DEBUG = False
 
+CORS_ALLOWED_ORIGINS = [
+    'https://taskflow.com'
+]
+
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 DATABASES = {

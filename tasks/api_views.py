@@ -12,7 +12,11 @@ class TaskListCreateAPIView(ListCreateAPIView):
     serializer_class = TaskSerializer
 
     def get_queryset(self):
-        return Task.objects.for_user(self.request.user).active()
+        if self.request.user.is_superuser:
+            qs = Task.objects.all()
+        else:
+            qs = Task.objects.for_user(self.request.user)
+        return qs.active().order_by('-created_at')
     
     def perform_create(self, serializer):
         serializer.save(
@@ -25,7 +29,11 @@ class TaskRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = TaskSerializer
 
     def get_queryset(self):
-        return Task.objects.for_user(self.request.user).active()
+        if self.request.user.is_superuser:
+            qs = Task.objects.all()
+        else:
+            qs = Task.objects.for_user(self.request.user)
+        return qs.active().order_by('-created_at')
     
     def perform_destroy(self, instance):
         instance.soft_delete(by_user=self.request.user)

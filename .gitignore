@@ -3,3 +3,6 @@ db.sqlite3
 __pychace__/
 *.pyc
 .env
+postman
+.postman
+.pytest_cache
