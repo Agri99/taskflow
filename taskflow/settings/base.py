@@ -67,6 +67,7 @@ REST_FRAMEWORK = {
         'anon': '20/hour',
         'user': '1000/day',
     },
+    'EXCEPTION_HANDLER': 'taskflow.exceptions.custom_exception_handler'
 }
 
 MIDDLEWARE = [
