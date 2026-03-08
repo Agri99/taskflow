@@ -13,7 +13,7 @@ This is designed as an internal tool where admins provision accounts. For public
 - Write **production-style Django code**, not tutorial snippets  
 - Enforce permissions at the **model / queryset layer** (single source of truth)  
 - Use **tests to drive behavior** and protect invariants  
-- Provide a portfolio-ready backend blueprint that can later support a UI or API
+- Provide a portfolio-ready backend blueprint with a fully functional REST API and minimal Django UI
 - Implement **RBAC (Role-Based Access Control)** with proper permission mapping  
 - Maintain an **immutable audit trail** of critical actions
 
@@ -213,19 +213,54 @@ Future: Task updates, role changes, membership changes
 
 ---
 
+## 🌐 REST API
+
+TaskFlow exposes a versioned REST API at `/api/v1/` using JWT authentication.
+
+### Authentication
+```bash
+# Get your access token
+curl -X POST http://localhost:8000/api/v1/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_user", "password": "your_pass"}'
+
+# Use it in subsequent requests
+curl http://localhost:8000/api/v1/tasks/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Endpoints
+
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| POST | `/api/v1/auth/login/` | Get JWT tokens | Public |
+| POST | `/api/v1/auth/refresh/` | Refresh access token | Public |
+| GET/POST | `/api/v1/tasks/` | List/create tasks | Authenticated |
+| GET/PATCH/DELETE | `/api/v1/tasks/<id>/` | Task detail | Authenticated |
+| GET/POST | `/api/v1/tasks/<id>/comments/` | List/create comments | Authenticated |
+| GET/PATCH/DELETE | `/api/v1/tasks/<id>/comments/<id>/` | Comment detail | Authenticated |
+| GET | `/api/v1/rbac/audit/` | Audit log | `rbac.view_auditentry` |
+
+### Interactive Docs
+Visit `/api/docs/` for full Swagger documentation.
+```
+
 ## 🧠 Architecture & tech stack
 
 - **Framework:** Django  
-- **Database (dev/prod parity):** PostgreSQL (Docker), SQLite used for local dev/test if configured that way  
-- **Testing:** pytest + pytest-django, Django test client  
+- **Database (dev/prod parity):** PostgreSQL (Docker), SQLite used for local dev/test if configured that way
 - **DevOps:** Docker, Docker Compose, GitHub Actions (CI)
-- **RBAC:** Django `Permission` model + custom Role & Membership layer  
-- **Audit:** GenericForeignKey-based immutable audit log  
+- **RBAC:** Django `Permission` model + custom Role & Membership layer
+- **Audit:** GenericForeignKey-based immutable audit log
+- **API Layer:** Django REST FRAMEWORK with JWT authentication (simplejwt)
+- **API Documentation:** drf-spectacular (Swagger UI at /api/docs/)
+- **Testing:** pytest + pytest-django, Django test client + DRF APIClient
 
 - **Design principles:**
   - Single source of truth for permissions (QuerySets + Model methods)
   - Templates remain presentation-only; business rules live on the server
   - Fail-safe defaults: soft delete + purge, 404 over 403 to avoid leaking presence
+  - API views are separate from Django views: api_views.py handles JSON resnponses for external clients while views.py handles HTML rendering for browsers. Business logic lives in models so both layers share the same rules without duplication.
 
 ---
 
@@ -241,7 +276,7 @@ Future: Task updates, role changes, membership changes
 
 ## 🧪 Testing Philosophy
 
-- Tests describe **behavior**, not implementation details  
+- Tests describe **behavior**, not implementation details
 - Boundary conditions are explicitly tested:
   - Exact edit-window cutoff
   - Attempted edits after deletion
@@ -354,6 +389,16 @@ Controls how long after creation a comment can be edited.
 * **Organization scoping is a cross-cutting concern** - QuerySet helpers that apply organization filtering consistently prevent data leakage and simplify security
 
 * **Superuser access requires special handling** - Production systems need privileged accounts that can operate across organizational boundaries for support and debugging
+
+* **Model-level business logic makes security reusable** - By implementing soft_delete() and apply_edit() in the models, every interface—Django views, API endpoints, and future integrations—automatically inherits the same rules. If those checks lived in views, each interface would require its own duplicated implementation.
+
+* **Serializers translate data; they should not enforce policy** - Business rules like edit-window validation belong in the model, not the serializer. Calling apply_edit() keeps decision-making centralized while the serializer focuses solely on input/output transformation.
+
+* **Configuration errors often fail silently** - The COMMENT_EDIT_WINDOW_MINUTES vs COMMENTS_EDIT_WINDOW_MINUTES typo disabled a feature without raising an error. Misconfigured settings frequently produce subtle behavioral bugs rather than crashes, which is why automated tests are critical.
+
+* **Authentication mechanisms encode architectural tradeoffs** - Session authentication keeps state on the server and supports true logout and revocation. JWT shifts state to the client, simplifying server infrastructure but making token invalidation significantly harder.
+
+* **URL separation reflects long-term architecture** - Maintaining api_urls.py separately from urls.py isolates API contracts from the browser interface. This allows the UI layer to evolve—or be removed—without altering the API surface.
 
 ---
 

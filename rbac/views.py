@@ -19,7 +19,7 @@ class AuditLogView(LoginRequiredMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         """Check RBAC permission before allowing access"""
-        if not user_has_perm(request.user, 'rbac.view_audientry'):
+        if not user_has_perm(request.user, 'rbac.view_auditentry'):
             raise PermissionDenied('You do not have permission to view audit logs.')
         return super().dispatch(request, *args, **kwargs)
     
