@@ -27,11 +27,11 @@ class APITest(TestCase):
             role = MembershipProfile.Role.ADMIN
         )
 
-        refresh = RefreshToken.for_user(self.moderator)
-        token = str(refresh.access_token)
+        refreshA = RefreshToken.for_user(self.moderator)
+        tokenA = str(refreshA.access_token)
 
         self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokenA)
 
         self.task = Task.objects.create(
             title = 'Task Test',
@@ -53,3 +53,37 @@ class APITest(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+
+    def test_unauthenticated_user_cannot_list_tasks(self):
+        self.client.credentials()
+
+        url = reverse('tasks-api:task-api-list')
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_user_cannot_see_another_org_tasks(self):
+        self.userB = User.objects.create_user(
+            username = 'user B',
+            password = 'pass1234'
+        )
+
+        self.orgB = Organization.objects.create(name='Org B')
+
+        MembershipProfile.objects.create(
+            user = self.userB,
+            organization = self.orgB,
+            role = MembershipProfile.Role.ADMIN
+        )
+
+        refresh = RefreshToken.for_user(self.userB)
+        token = str(refresh.access_token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
+
+        url = reverse('tasks-api:task-api-list')
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.task.pk, response.data['results'])
