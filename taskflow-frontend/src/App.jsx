@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from './components/Login'
 import TaskList from './components/TaskList'
+import TaskDetail from './components/TaskDetail'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -12,6 +13,11 @@ function App() {
               <Route path='/tasks' element={
                 <ProtectedRoute>
                   <TaskList />
+                </ProtectedRoute>
+              } />
+              <Route path='/tasks/:id' element={
+                <ProtectedRoute>
+                  <TaskDetail />
                 </ProtectedRoute>
               } />
           </Routes>

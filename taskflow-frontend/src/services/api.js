@@ -39,3 +39,18 @@ export const loginUser = async (username, password) => {
 
     return await response.json() // returns { access, refresh }
 }
+
+// Fetches a single task by ID
+export const fetchTask = async (id) => {
+    const response = await fetch(`${BASE_URL}/tasks/${id}`, {
+        headers: {
+            'Authorization': `Bearer ${getToken()}`,
+        }
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch task')
+    }
+
+    return await response.json()
+}
