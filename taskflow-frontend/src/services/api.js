@@ -54,3 +54,23 @@ export const fetchTask = async (id) => {
 
     return await response.json()
 }
+
+// Fetches all comments for a specific task
+// Fetches all comments for a specific task
+export const fetchComments = async (taskId) => {
+    const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/`, {
+        headers: {
+            'Authorization': `Bearer ${getToken()}`,
+        }
+    })
+
+    if (response.status === 404) {
+        return { results: [] }
+    }
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch comments')
+    }
+
+    return await response.json()
+}

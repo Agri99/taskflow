@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react"
 import { fetchTasks } from "../services/api"
 import { Link } from "react-router-dom"
 import useFetch from "../hooks/useFetch"
