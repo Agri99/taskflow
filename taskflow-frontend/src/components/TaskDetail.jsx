@@ -1,32 +1,19 @@
 import { useParams } from "react-router-dom"
-import { useEffect, useState } from "react"
 import { fetchTask } from "../services/api"
+import useFetch from "../hooks/useFetch"
 
 function TaskDetail() {
     const {id} = useParams()
-    const [task, setTask] = useState({})
-    const [error, setError] = useState(null)
-
-    useEffect(() => {
-        const loadTask = async () => {
-            try {
-                const data = await fetchTask(id)
-                setTask(data)
-            } catch (err) {
-                setError(err.message)
-            }
-        }
-        loadTask()
-    }, [])
+    const { data, error } = useFetch(() => fetchTask(id), {})
 
     return(
         <div>
             {error && <p style={{color:'red'}}>{error}</p>}
-            <div key={task.id}>
-                <h1>{task.title}</h1>
-                <p>{task.description}</p>
-                <p>Status: {task.status_display}</p>
-                <p>Priority: {task.priority_display}</p>
+            <div key={data.id}>
+                <h1>{data.title}</h1>
+                <p>{data.description}</p>
+                <p>Status: {data.status_display}</p>
+                <p>Priority: {data.priority_display}</p>
             </div>
             <div>
                 <h3>Comments</h3>
