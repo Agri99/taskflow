@@ -1,12 +1,30 @@
 import { useParams } from "react-router-dom"
 import { fetchComments, fetchTask } from "../services/api"
 import useFetch from "../hooks/useFetch"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import CommentForm from "./CommentForm"
 
 function TaskDetail() {
     const {id} = useParams()
     const { data: task, error: taskError } = useFetch(() => fetchTask(id), {})
-    const { data: comments, error: commentError } = useFetch(() => fetchComments(id), { results: [] })
+    const [comments, setComments] = useState([])
+
+    useEffect(() => {
+        const loadComments = async () => {
+            try {
+                const data = await fetchComments(id)
+                setComments(data.results)
+            } catch (err) {
+                console.error(err) 
+            }
+        }
+        loadComments()
+    }, [id])
+
+    const handleCommentCreated = (newComment) => {
+        setComments(prev => [...prev, newComment])
+        console.log(newComment)
+    }
 
     return(
         <div>
@@ -19,10 +37,10 @@ function TaskDetail() {
             </div>
             <div>
                 <h3>Comments</h3>
-                {commentError && <p style={{color:'red'}}>{commentError}</p>}
-                {comments.results.length === 0
+                <CommentForm taskId={id} onCommentCreated={handleCommentCreated}/>
+                {comments.length === 0
                     ? <p>No comments yet.</p>
-                    : comments.results.map((comment) => (
+                    : comments.map((comment) => (
                     <ul key={comment.id}>
                         <li>{comment.author_username}</li>
                         <li>{comment.content}</li>

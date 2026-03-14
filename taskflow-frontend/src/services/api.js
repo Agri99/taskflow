@@ -74,3 +74,20 @@ export const fetchComments = async (taskId) => {
 
     return await response.json()
 }
+
+export const createComment = async (taskId, content) => {
+    const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to create new comment')
+    }
+
+    return await response.json()
+}
