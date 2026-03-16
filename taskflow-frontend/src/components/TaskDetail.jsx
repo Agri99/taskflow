@@ -42,8 +42,16 @@ function TaskDetail() {
                     ? <p>No comments yet.</p>
                     : comments.map((comment) => (
                     <ul key={comment.id}>
-                        <li>{comment.author_username}</li>
-                        <li>{comment.content}</li>
+                        <div>
+                            <p>{comment.content}</p>
+                            <strong>{comment.author_username}</strong>
+                            <small>
+                                <span>{new Date(comment.created_at).toLocaleString()}</span>
+                                {comment.is_edited == true &&
+                                <span>(edited)</span>
+                                }
+                            </small>
+                        </div>
                     </ul>
                     ))}
             </div>
