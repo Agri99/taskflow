@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom"
-import { fetchComments, fetchTask, createComment, getCurrentUserID } from "../services/api"
+import { fetchComments, fetchTask, getCurrentUserID } from "../services/api"
 import useFetch from "../hooks/useFetch"
 import { useEffect, useState } from "react"
 import CommentForm from "./CommentForm"
@@ -26,6 +26,10 @@ function TaskDetail() {
     const handleCommentCreated = (newComment) => {
         setComments(prev => [...prev, newComment])
         console.log(newComment)
+    }
+
+    const handleDeleteComment = (deletedComment) => {
+        setComments(comments.filter((comment) => comment.id !== deletedComment.id))
     }
 
     const isWithinEditWindow = (created_at) => {
@@ -66,7 +70,7 @@ function TaskDetail() {
                             </small>
                             {/* Delete: author only */}
                             {comment.author === currentUserID && (
-                                <button>Delete</button>
+                                <button onClick={() => handleDeleteComment(comment)}>Delete</button>
                             )}
                             {/* Edit: author only AND within edit window */}
                             {comment.author === currentUserID && isWithinEditWindow(comment.created_at) && (
