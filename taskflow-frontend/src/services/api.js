@@ -1,5 +1,5 @@
-// Base URL for all API calls
-const BASE_URL = 'http://localhost:8000/api/v1'
+import axiosInstance from "./axiosInstance"
+import axios from "axios"
 
 // Retrives the stored JWT token from localStorage
 const getToken = () => localStorage.getItem('access_token')
@@ -7,89 +7,34 @@ const getToken = () => localStorage.getItem('access_token')
 // Fetches all tasks for the authenticated user
 // Returns the paginated response object from Django
 export const fetchTasks = async () => {
-    const response = await fetch(`${BASE_URL}/tasks/`, {
-        headers: {
-            'Authorization': `Bearer ${getToken()}`,
-        }
-    })
-
-    // Check if request was successful before touching the data
-    if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to fetch tasks')
-    }
-
-    const data = await response.json()
-    return data
+    const response = await axiosInstance.get('/tasks/')
+    return response.data
 }
 
 // Send credentials to Django and returns the token pair
 export const loginUser = async (username, password) => {
-    const response = await fetch(`${BASE_URL}/auth/login/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password })
+    const response = await axios.post('http://localhost:8000/api/v1/auth/login/', {
+        username, password
     })
-
-    if (!response.ok) {
-        throw new Error('Invalid credentials')
-    }
-
-    return await response.json() // returns { access, refresh }
+    return response.data
 }
 
 // Fetches a single task by ID
 export const fetchTask = async (id) => {
-    const response = await fetch(`${BASE_URL}/tasks/${id}`, {
-        headers: {
-            'Authorization': `Bearer ${getToken()}`,
-        }
-    })
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch task')
-    }
-
-    return await response.json()
+    const response = await axiosInstance.get(`/tasks/${id}/`)
+    return response.data
 }
 
 // Fetches all comments for a specific task
 // Fetches all comments for a specific task
 export const fetchComments = async (taskId) => {
-    const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/`, {
-        headers: {
-            'Authorization': `Bearer ${getToken()}`,
-        }
-    })
-
-    if (response.status === 404) {
-        return { results: [] }
-    }
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch comments')
-    }
-
-    return await response.json()
+    const response = await axiosInstance.get(`/tasks/${taskId}/comments/`)
+    return response.data
 }
 
 export const createComment = async (taskId, content) => {
-    const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${getToken()}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content })
-    })
-
-    if (!response.ok) {
-        throw new Error('Failed to create new comment')
-    }
-
-    return await response.json()
+    const response = await axiosInstance.post(`/tasks/${taskId}/comments/`, { content })
+    return response.data
 }
 
 export const getCurrentUserID = () => {
@@ -97,4 +42,9 @@ export const getCurrentUserID = () => {
     if (!token) return null
     const payload = JSON.parse(atob(token.split('.')[1]))
     return Number(payload.user_id)
+}
+
+export const deleteComment = async (taskId, commentId) => {
+    const response = await axiosInstance.delete(`/tasks/${taskId}/comments/${commentId}/`)
+    return response.data
 }
