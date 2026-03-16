@@ -91,3 +91,10 @@ export const createComment = async (taskId, content) => {
 
     return await response.json()
 }
+
+export const getCurrentUserID = () => {
+    const token = getToken()
+    if (!token) return null
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return Number(payload.user_id)
+}
