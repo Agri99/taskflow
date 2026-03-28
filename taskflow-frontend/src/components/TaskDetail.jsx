@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom"
-import { fetchComments, fetchTask, getCurrentUserID } from "../services/api"
+import { fetchComments, fetchTask, getCurrentUserID, updateComment } from "../services/api"
 import useFetch from "../hooks/useFetch"
 import { useEffect, useState } from "react"
 import CommentForm from "./CommentForm"
@@ -9,7 +9,10 @@ const currentUserID = getCurrentUserID()
 function TaskDetail() {
     const {id} = useParams()
     const { data: task, error: taskError } = useFetch(() => fetchTask(id), {})
+    const { title, description, status_display, priority_display } = task || {}
     const [comments, setComments] = useState([])
+    const [editingId, setEditingId] =  useState (null)
+    const [editContent, setEditContent] = useState("")
 
     useEffect(() => {
         const loadComments = async () => {
@@ -32,6 +35,27 @@ function TaskDetail() {
         setComments(comments.filter((comment) => comment.id !== deletedComment.id))
     }
 
+    const startEditing = async (comment) => {
+        setEditingId(comment.id)
+        setEditContent(comment.content)
+    }
+
+    const handleEditComment = async (commentId) => {
+        try {
+            const updatedComment = await updateComment(id, commentId, editContent)
+
+            setComments(prevComments =>
+                prevComments.map(c => (c.id === commentId ? updatedComment : c))
+            )
+
+            setEditingId(null)
+            setEditContent("")
+        } catch (error) {
+            console.error("Error updating content:", error)
+            alert("Failed to update comment.")
+        }
+    }
+
     const isWithinEditWindow = (created_at) => {
         const now = new Date()
         const created = new Date(created_at)
@@ -46,39 +70,65 @@ function TaskDetail() {
     return(
         <div>
             {taskError && <p style={{color:'red'}}>{error}</p>}
-            <div key={task.id}>
-                <h1>{task.title}</h1>
-                <p>{task.description}</p>
-                <p>Status: {task.status_display}</p>
-                <p>Priority: {task.priority_display}</p>
-            </div>
+            {task && (
+                <div key={id}>
+                    <h1>{title}</h1>
+                    <p>{description}</p>
+                    <p>Status: {status_display}</p>
+                    <p>Priority: {priority_display}</p>
+                </div>
+            )}
             <div>
                 <h3>Comments</h3>
                 <CommentForm taskId={id} onCommentCreated={handleCommentCreated}/>
                 {comments.length === 0
                     ? <p>No comments yet.</p>
                     : comments.map((comment) => (
-                    <ul key={comment.id}>
-                        <div>
-                            <p>{comment.content}</p>
-                            <strong>{comment.author_username}</strong>
-                            <small>
-                                <span>{new Date(comment.created_at).toLocaleString()}</span>
-                                {comment.is_edited == true &&
-                                <span>(edited)</span>
-                                }
-                            </small>
-                            {/* Delete: author only */}
-                            {comment.author === currentUserID && (
-                                <button onClick={() => handleDeleteComment(comment)}>Delete</button>
-                            )}
-                            {/* Edit: author only AND within edit window */}
-                            {comment.author === currentUserID && isWithinEditWindow(comment.created_at) && (
-                                <button>Edit</button>
-                            )}
-                        </div>
-                    </ul>
-                    ))}
+                    <div key={comment.id}>
+                        {editingId === comment.id ? (
+                            /* Edit Mode: Show the input form */
+                            <div>
+                                <textarea
+                                    className="edit-textarea"
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}/>
+                                <div className="edit-actions">
+                                    <button onClick={() => handleEditComment(comment.id)}>Save</button>
+                                    <button onClick={() => { setEditingId(null); setEditContent("");}}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            /* View ModeL Show the content as usual */
+                            <div>
+                                <p>{comment.content}</p>
+                                <strong>{comment.author_username}</strong>
+                                <small>
+                                    <span>{new Date(comment.created_at).toLocaleString()}</span>
+                                    {comment.is_edited &&
+                                    <span>(edited)</span>
+                                    }
+                                </small>
+                                {/* Delete: author only */}
+                                {comment.author === currentUserID && (
+                                    <button onClick={() => handleDeleteComment(comment)}>
+                                        Delete
+                                    </button>
+                                )}
+                                {/* Edit: author only AND within edit window */}
+                                {comment.author === currentUserID && isWithinEditWindow(comment.created_at) && (
+                                    <button onClick={() => {
+                                        setEditingId(comment.id);
+                                        setEditContent(comment.content);
+                                    }}>
+                                        Edit
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     ) 

@@ -25,12 +25,12 @@ export const fetchTask = async (id) => {
     return response.data
 }
 
-// Fetches all comments for a specific task
-// Fetches all comments for a specific task
+// Fetches all comments from a specific task
 export const fetchComments = async (taskId) => {
     const response = await axiosInstance.get(`/tasks/${taskId}/comments/`)
     return response.data
 }
+
 
 export const createComment = async (taskId, content) => {
     const response = await axiosInstance.post(`/tasks/${taskId}/comments/`, { content })
@@ -46,5 +46,13 @@ export const getCurrentUserID = () => {
 
 export const deleteComment = async (taskId, commentId) => {
     const response = await axiosInstance.delete(`/tasks/${taskId}/comments/${commentId}/`)
+    return response.data
+}
+
+// Fetch a single comment from a specific task to be updated
+export const updateComment = async (taskId, commentId, content) => {
+    const response = await axiosInstance.patch(`/tasks/${taskId}/comments/${commentId}/`, {
+        content
+    })
     return response.data
 }
