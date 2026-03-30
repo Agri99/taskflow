@@ -44,6 +44,13 @@ export const getCurrentUserID = () => {
     return Number(payload.user_id)
 }
 
+export const canViewAudit = () => {
+    const token = getToken()
+    if (!token) return false
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.can_view_audit || false
+}
+
 export const deleteComment = async (taskId, commentId) => {
     const response = await axiosInstance.delete(`/tasks/${taskId}/comments/${commentId}/`)
     return response.data

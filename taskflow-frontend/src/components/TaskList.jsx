@@ -1,4 +1,4 @@
-import { fetchTasks } from "../services/api"
+import { fetchTasks, canViewAudit } from "../services/api"
 import { Link } from "react-router-dom"
 import useFetch from "../hooks/useFetch"
 
@@ -17,6 +17,7 @@ function TaskList() {
                 <p>{task.status_display}</p>
             </div>
         ))}
+        { canViewAudit() && <Link to={`/rbac/audit/`}>Audit</Link>}
     </div>
   )
 }

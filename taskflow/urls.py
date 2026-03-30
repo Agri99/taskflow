@@ -5,6 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import index
+from accounts.views import CustomTokenObtainPairView
 
 
 urlpatterns = [
@@ -18,7 +19,7 @@ urlpatterns = [
     
     # API v1
     path('api/v1/', include([
-        path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
         path('tasks/', include('tasks.api_urls', namespace='tasks-api')),
         path('rbac/', include('rbac.api_urls', namespace='rbac-api')),

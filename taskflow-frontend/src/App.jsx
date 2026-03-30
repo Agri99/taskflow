@@ -3,6 +3,7 @@ import Login from './components/Login'
 import TaskList from './components/TaskList'
 import TaskDetail from './components/TaskDetail'
 import ProtectedRoute from './components/ProtectedRoute'
+import { canViewAudit } from './services/api'
 
 function App() {
     return (
@@ -20,6 +21,12 @@ function App() {
                   <TaskDetail />
                 </ProtectedRoute>
               } />
+              <Route path='/rbac/audit' element={
+                <ProtectedRoute permissionCheck={canViewAudit}>
+                  <AuditLog />
+                </ProtectedRoute>
+              }
+              />
           </Routes>
       </BrowserRouter>
 
