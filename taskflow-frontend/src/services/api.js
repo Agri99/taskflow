@@ -63,3 +63,10 @@ export const updateComment = async (taskId, commentId, content) => {
     })
     return response.data
 }
+
+
+// Fetch every tasks scooped by RBAC permission
+export const fetchAuditLogs = async () => {
+    const response = await axiosInstance.get('/rbac/audit/')
+    return response.data
+}

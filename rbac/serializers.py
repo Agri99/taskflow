@@ -7,7 +7,7 @@ class AuditEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AuditEntry
-        fields = ['actor', 'actor_username', 'target_content_type', 'timestamp', 'organization', 'payload',]
+        fields = ['id', 'actor', 'action', 'actor_username', 'target_content_type', 'timestamp', 'organization', 'payload',]
         read_only_fields = ['actor', 'actor_username', 'target_content_type', 'timestamp', 'organization', 'payload',]
 
     def get_actor_username(self, obj):

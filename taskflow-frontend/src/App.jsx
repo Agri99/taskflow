@@ -4,6 +4,7 @@ import TaskList from './components/TaskList'
 import TaskDetail from './components/TaskDetail'
 import ProtectedRoute from './components/ProtectedRoute'
 import { canViewAudit } from './services/api'
+import AuditLog from './components/AuditLog'
 
 function App() {
     return (
