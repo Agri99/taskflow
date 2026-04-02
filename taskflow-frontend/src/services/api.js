@@ -6,8 +6,11 @@ const getToken = () => localStorage.getItem('access_token')
 
 // Fetches all tasks for the authenticated user
 // Returns the paginated response object from Django
-export const fetchTasks = async () => {
-    const response = await axiosInstance.get('/tasks/')
+export const fetchTasks = async (next) => {
+    const url = next ? next : 'http://localhost:8000/api/v1/tasks/'
+    const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}`}
+    })
     return response.data
 }
 
