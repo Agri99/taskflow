@@ -10,7 +10,7 @@ function TaskList() {
     useEffect(() => {
         const loadTasks = async () => {
             try {
-                const data = await fetchTasks(nextPage)
+                const data = await fetchTasks()
                 setTasks(data.results)
                 setNextPage(data.next) // Store the next page URL
             } catch (err) {
@@ -28,7 +28,7 @@ function TaskList() {
     const loadMore = async () => {
         const data = await fetchTasks(nextPage)
         handlePageLoad(data.results)
-        setNextPage(data.next)
+        setNextPage(data.next) // Update nextPage for the page after that
     }
 
     return(
