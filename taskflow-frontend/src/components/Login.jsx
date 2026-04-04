@@ -13,6 +13,7 @@ function Login() {
         try {
             const data = await loginUser(user, password)
             localStorage.setItem('access_token', data.access)
+            localStorage.setItem('refresh_token', data.refresh)
             navigate('/tasks')
             console.log('Login successful!', data.access)
         }catch (err) {
