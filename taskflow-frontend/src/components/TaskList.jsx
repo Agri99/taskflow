@@ -1,35 +1,10 @@
 import { fetchTasks, canViewAudit } from "../services/api"
 import { Link } from "react-router-dom"
-import { useEffect, useState } from "react"
+import usePagination from "../hooks/usePagination"
 
 function TaskList() {
-    const [tasks, setTasks] = useState([])
-    const [nextPage, setNextPage] = useState(null)
-    const [error, setError] = useState(null)
 
-    useEffect(() => {
-        const loadTasks = async () => {
-            try {
-                const data = await fetchTasks()
-                setTasks(data.results)
-                setNextPage(data.next) // Store the next page URL
-            } catch (err) {
-                setError(err.message)
-                console.error(err)
-            }
-        }
-        loadTasks()
-    }, [])
-
-    const handlePageLoad = (newTasks) => {
-        setTasks(prev => [...prev, newTasks])
-    }
-
-    const loadMore = async () => {
-        const data = await fetchTasks(nextPage)
-        handlePageLoad(data.results)
-        setNextPage(data.next) // Update nextPage for the page after that
-    }
+    const {tasks, error, loadMore, nextPage} = usePagination(fetchTasks)
 
     return(
         <div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState } from "react"
+import { useEffect } from "react"
 
 function useFetch(fetchData, initialValue = {}) {
     const [data, setData] = useState(initialValue)
