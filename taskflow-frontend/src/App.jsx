@@ -11,6 +11,7 @@ function App() {
       // BrowserRouter: enables routing for the whole app
       <BrowserRouter>
           <Routes>
+              <Route path='/' element={<TaskList />} />
               <Route path='/login' element={<Login />} />
               <Route path='/tasks' element={
                 <ProtectedRoute>

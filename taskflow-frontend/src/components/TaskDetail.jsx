@@ -13,6 +13,7 @@ function TaskDetail() {
     const [comments, setComments] = useState([])
     const [editingId, setEditingId] =  useState (null)
     const [editContent, setEditContent] = useState("")
+    const [error, setError] = useState(null)
 
     useEffect(() => {
         const loadComments = async () => {
@@ -20,7 +21,7 @@ function TaskDetail() {
                 const data = await fetchComments(id)
                 setComments(data.results)
             } catch (err) {
-                console.error(err) 
+                setError(err.message)
             }
         }
         loadComments()
@@ -28,7 +29,6 @@ function TaskDetail() {
 
     const handleCommentCreated = (newComment) => {
         setComments(prev => [...prev, newComment])
-        console.log(newComment)
     }
 
     const handleDeleteComment = (deletedComment) => {
@@ -50,8 +50,8 @@ function TaskDetail() {
 
             setEditingId(null)
             setEditContent("")
-        } catch (error) {
-            console.error("Error updating content:", error)
+        } catch (err) {
+            setError(err.message)
             alert("Failed to update comment.")
         }
     }
@@ -69,7 +69,7 @@ function TaskDetail() {
 
     return(
         <div>
-            {taskError && <p style={{color:'red'}}>{error}</p>}
+            {taskError && <p style={{color:'red'}}>{taskError}</p>}
             {task && (
                 <div key={id}>
                     <h1>{title}</h1>
@@ -81,6 +81,7 @@ function TaskDetail() {
             <div>
                 <h3>Comments</h3>
                 <CommentForm taskId={id} onCommentCreated={handleCommentCreated}/>
+                {error && <p style={{color: 'red'}}>{error}</p>}
                 {comments.length === 0
                     ? <p>No comments yet.</p>
                     : comments.map((comment) => (

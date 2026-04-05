@@ -81,8 +81,8 @@ export const updateComment = async (taskId, commentId, content) => {
 // Fetch every tasks scooped by RBAC permission
 export const fetchAuditLogs = async (next) => {
     const url = next
-    ? next.replace('http://localhost:8000/api/v1')
-    : '/rbac/audit'
+    ? next.replace('http://localhost:8000/api/v1', '')
+    : '/rbac/audit/'
     const response = await axiosInstance.get(url)
     return response.data
 }
