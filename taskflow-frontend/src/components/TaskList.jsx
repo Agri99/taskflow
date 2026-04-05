@@ -4,7 +4,9 @@ import usePagination from "../hooks/usePagination"
 
 function TaskList() {
 
-    const {tasks, error, loadMore, nextPage} = usePagination(fetchTasks)
+    const {tasks, error, loadMore, nextPage, loading} = usePagination(fetchTasks)
+
+    if (loading) return <p>Loading...</p>
 
     return(
         <div>

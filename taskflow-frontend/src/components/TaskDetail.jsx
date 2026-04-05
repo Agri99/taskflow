@@ -8,7 +8,7 @@ const currentUserID = getCurrentUserID()
 
 function TaskDetail() {
     const {id} = useParams()
-    const { data: task, error: taskError } = useFetch(() => fetchTask(id), {})
+    const { data: task, error: taskError, loading } = useFetch(() => fetchTask(id), {})
     const { title, description, status_display, priority_display } = task || {}
     const [comments, setComments] = useState([])
     const [editingId, setEditingId] =  useState (null)
@@ -66,6 +66,8 @@ function TaskDetail() {
 
         return diffInMs <= minutesInMs
     }
+
+    if (loading) return <p>Loading...</p>
 
     return(
         <div>

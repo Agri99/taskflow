@@ -20,7 +20,7 @@ function useFetch(fetchData, initialValue = {}) {
             loadTasks()
     }, [])
 
-    return {data, error}
+    return {data, error, loading}
 }
 
 export default useFetch

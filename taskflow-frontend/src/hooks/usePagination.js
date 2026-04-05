@@ -5,6 +5,7 @@ function usePagination(fetchData) {
     const [tasks, setTasks] = useState([])
     const [nextPage, setNextPage] = useState(null)
     const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const loadTasks = async () => {
@@ -12,8 +13,10 @@ function usePagination(fetchData) {
                 const tasks = await fetchData()
                 setTasks(tasks.results)
                 setNextPage(tasks.next) // Store the next page URL
+                setLoading(false)
             } catch (err) {
                 setError(err.message)
+                setLoading(false)
             }
         }
         loadTasks()
@@ -29,7 +32,7 @@ function usePagination(fetchData) {
         setNextPage(tasks.next) // Update nextPage
     }
 
-    return {tasks, error, loadMore, nextPage}
+    return {tasks, error, loadMore, nextPage, loading}
 }
 
 export default usePagination

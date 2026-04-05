@@ -3,7 +3,9 @@ import usePagination from "../hooks/usePagination"
 
 function AuditLog() {
 
-    const {tasks, error, loadMore, nextPage} = usePagination(fetchAuditLogs)
+    const {tasks, error, loadMore, nextPage, loading} = usePagination(fetchAuditLogs)
+
+    if (loading) return <p>Loading...</p>
 
     return(
         <div>
