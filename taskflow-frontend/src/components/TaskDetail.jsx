@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom"
-import { fetchComments, fetchTask, getCurrentUserID, updateComment } from "../services/api"
+import { fetchComments, fetchTask, getCurrentUserID, updateComment, deleteComment } from "../services/api"
 import useFetch from "../hooks/useFetch"
 import { useEffect, useState } from "react"
 import CommentForm from "./CommentForm"
@@ -31,13 +31,13 @@ function TaskDetail() {
         setComments(prev => [...prev, newComment])
     }
 
-    const handleDeleteComment = (deletedComment) => {
-        setComments(comments.filter((comment) => comment.id !== deletedComment.id))
-    }
-
-    const startEditing = async (comment) => {
-        setEditingId(comment.id)
-        setEditContent(comment.content)
+    const handleDeleteComment = async (deletedComment) => {
+        try {
+            await deleteComment(id, deletedComment.id)
+            setComments(comments.filter((comment) => comment.id !== deletedComment.id))
+        } catch (err) {
+            setError(err.message)
+        }
     }
 
     const handleEditComment = async (commentId) => {

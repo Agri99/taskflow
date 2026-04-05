@@ -14,7 +14,7 @@ function AuditLog() {
             {tasks.map((log) => (
                 <div key={log.id}>
                     <h3>{log.actor_username}</h3>
-                    <p>{log.timestamp}</p>
+                    <p>{new Date(log.timestamp).toLocaleString()}</p>
                     <p>{log.action}</p>
                 </div>
             ))}

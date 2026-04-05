@@ -27,9 +27,13 @@ function usePagination(fetchData) {
     }
 
     const loadMore = async () => {
-        const tasks = await fetchData(nextPage)
-        handlePageLoad(tasks.results)
-        setNextPage(tasks.next) // Update nextPage
+        try {
+            const tasks = await fetchData(nextPage)
+            handlePageLoad(tasks.results)
+            setNextPage(tasks.next) // Update nextPage
+        } catch (err) {
+            setError(err.message)
+        }
     }
 
     return {tasks, error, loadMore, nextPage, loading}

@@ -49,7 +49,7 @@ export const getCurrentUserID = () => {
         const payload = JSON.parse(atob(token.split('.')[1]))
         return Number(payload.user_id)
     } catch {
-        return null
+        return false
     }
 }
 

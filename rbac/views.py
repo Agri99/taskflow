@@ -62,10 +62,10 @@ class AuditLogView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # Pass filter values back to template for form persistence
-        context['curent_action'] = self.request.GET.get('action', '')
-        context['curent_actor'] = self.request.GET.get('actor', '')
-        context['curent_search'] = self.request.GET.get('search', '')
-        context['curent_target_type'] = self.request.GET.get('target_type', '')
+        context['current_action'] = self.request.GET.get('action', '')
+        context['current_actor'] = self.request.GET.get('actor', '')
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_target_type'] = self.request.GET.get('target_type', '')
 
         # Provide action chioces for filter dropdown
         context['action_choices'] = AuditEntry.ACTION_CHOICES

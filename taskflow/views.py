@@ -13,8 +13,8 @@ def index(request):
         <p>Available routes:</p>
         <ul>
             <li>/admin/ — Django admin</li>
-            <li>/tasks/ — Task-related views</li>
-            <li>/rbac/audit/ — Audit-entry logs views</li>
+            <li>/api/v1/tasks/ — Task-related views</li>
+            <li>/api/v1/rbac/audit/ — Audit-entry logs views</li>
             <li>/api/docs/ — Visual interface</li>
         </ul>
     """)

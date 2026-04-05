@@ -1,25 +1,54 @@
 # TaskFlow
 
-TaskFlow is a **Django backend-focused project** built to demonstrate real-world backend engineering practices: permissions enforced at the query layer, soft deletion, time-based edit rules, background cleanup jobs, and test-driven development.
+TaskFlow is a **full-stack project** built to demonstrate real-world engineering practices across both backend and frontend layers: permissions enforced at the query layer, soft deletion, time-based edit rules, background cleanup jobs, test-driven development, and a React SPA consuming a versioned REST API.
 
-This project is intentionally **backend-first** — the focus is on robust server-side architecture, not front-end polish.
+This project is **backend-first by design** — the Django backend enforces all business rules, and the React frontend is a faithful consumer of those rules, not a duplicator of them.
 
 This is designed as an internal tool where admins provision accounts. For public-facing deployment, a registration system would be added.
 
 ---
 
-## 🎯 Project goals
+## Project goals
 
-- Write **production-style Django code**, not tutorial snippets  
-- Enforce permissions at the **model / queryset layer** (single source of truth)  
-- Use **tests to drive behavior** and protect invariants  
-- Provide a portfolio-ready backend blueprint with a fully functional REST API and minimal Django UI
-- Implement **RBAC (Role-Based Access Control)** with proper permission mapping  
+- Write **production-style Django code**, not tutorial snippets
+- Enforce permissions at the **model / queryset layer** (single source of truth)
+- Use **tests to drive behavior** and protect invariants
+- Provide a portfolio-ready blueprint with a fully functional REST API and a React frontend
+- Implement **RBAC (Role-Based Access Control)** with proper permission mapping
 - Maintain an **immutable audit trail** of critical actions
+- Build a **React SPA** that consumes the API with JWT authentication, optimistic UI updates, and RBAC-aware rendering
 
 ---
 
-## 🔐 Permissions Overview
+## Architecture & tech stack
+
+**Backend**
+- **Framework:** Django 6
+- **Database:** PostgreSQL (Docker), SQLite for local dev/test
+- **DevOps:** Docker, Docker Compose, GitHub Actions (CI)
+- **RBAC:** Django `Permission` model + custom Role & Membership layer
+- **Audit:** GenericForeignKey-based immutable audit log
+- **API Layer:** Django REST Framework with JWT authentication (simplejwt)
+- **API Documentation:** drf-spectacular (Swagger UI at `/api/docs/`)
+- **Testing:** pytest + pytest-django, Django test client + DRF APIClient
+
+**Frontend**
+- **Framework:** React 19 (Vite)
+- **Routing:** React Router v7
+- **HTTP Client:** Axios with request/response interceptors
+- **Auth:** JWT stored in localStorage, silent token refresh via interceptor
+- **State:** `useState`, `useEffect`, custom hooks (`useFetch`, `usePagination`)
+
+**Design principles**
+- Single source of truth for permissions (QuerySets + Model methods)
+- Templates remain presentation-only; business rules live on the server
+- Fail-safe defaults: soft delete + purge, 404 over 403 to avoid leaking presence
+- API views are separate from Django views: `api_views.py` handles JSON for external clients while `views.py` handles HTML. Business logic lives in models so both layers share the same rules without duplication
+- React components are consumers of backend rules, not enforcers — permission checks in the UI are UX conveniences, not security boundaries
+
+---
+
+## Permissions Overview
 
 | Action | Comment Author | Task Owner | Other Users |
 |--------|----------------|------------|-------------|
@@ -28,19 +57,14 @@ This is designed as an internal tool where admins provision accounts. For public
 | Delete comment | ✅ | ✅ | ❌ |
 
 Additional rules:
-- Deleted comments cannot be edited or deleted again  
-- Edited state is derived from `edited_at` (no duplicated boolean field)  
-- UI visibility is driven by flags computed in views, not templates  
-
-> These business rules are now enforced through a **Role-Based Access Control system** described below.
+- Deleted comments cannot be edited or deleted again
+- Edited state is derived from `edited_at` (no duplicated boolean field)
+- UI visibility is driven by flags computed in views, not templates
+- Edit window is enforced both server-side (model) and client-side (UX only)
 
 ---
 
-## 🛡️ RBAC (Role-Based Access Control)
-
-TaskFlow implements a production-grade RBAC system that separates business rules from administrative permissions.
-
-## 🛡️ RBAC (Role-Based Access Control)
+## RBAC (Role-Based Access Control)
 
 TaskFlow implements a production-grade RBAC system that separates business rules from administrative permissions.
 
@@ -64,11 +88,12 @@ if user_has_perm(user, 'comments.delete_comment'):
 
 ### Key Features
 
-✅ **Flexible role assignment** - Change permissions without code changes
-✅ **Single source of truth** - Permissions checked in model layer
-✅ **Organization-scoped** - Each org has isolated data
-✅ **Superuser override** - Admins can access cross-org audit logs
-✅ **Integration with business rules** - RBAC supplements, doesn't replace, ownership logic
+  **Flexible role assignment** - Change permissions without code changes
+  **Single source of truth** - Permissions checked in model layer
+  **Organization-scoped** - Each org has isolated data
+  **Superuser override** - Admins can access cross-org audit logs
+  **JWT claim injection** - `can_view_audit` baked into the JWT payload at login
+  **RBAC-aware React UI** - Audit link only visible to permitted users
 
 ### Setting Up Roles
 
@@ -107,32 +132,22 @@ User can now delete ANY comment in their organization (not just their own).
 
 ### Testing RBAC
 
-Run the integration test:
 ```bash
 pytest rbac/tests/test_rbac_integration.py -v
 ```
 
-Or test manually:
-1. Create a moderator role with delete permissions
-2. Assign role to a test user
-3. Log in as that user
-4. Delete another user's comment - should succeed
-5. Check audit log - entry should show the deletion
-
 ---
 
-## 🧾 Audit Logging System
+## Audit Logging System
 
 TaskFlow records an **immutable audit trail** of all critical actions.
 
 ### What Gets Logged
 
-Audit entries are automatically created for:
-- ✅ Comment created (`Comment.create_with_audit()`)
-- ✅ Comment edited (`comment.apply_edit()`)
-- ✅ Comment deleted (`comment.soft_delete()`)
-
-Future: Task updates, role changes, membership changes
+- Comment created (`Comment.create_with_audit()`)
+- Comment edited (`comment.apply_edit()`)
+- Comment deleted (`comment.soft_delete()`)
+- Task deleted (`task.soft_delete()`)
 
 ### Audit Entry Structure
 
@@ -147,87 +162,39 @@ Future: Task updates, role changes, membership changes
 
 ### Viewing Audit Logs
 
-**Option 1: Django Admin (Read-Only)**
-```
-/admin/rbac/auditentry/
-```
-- Filter by action, date, target type, organization
-- Search by username or payload content
-- Immutable (cannot edit or delete entries)
+**Django Admin (Read-Only):** `/admin/rbac/auditentry/`
 
-**Option 2: Custom Audit Viewer**
-```
-/rbac/audit/
-```
-- User-friendly interface with advanced filtering
-- Requires `rbac.view_auditentry` permission
-- Organization-scoped (users only see their org's logs)
-- Superusers see all logs across all organizations
+**React UI:** `/rbac/audit` — requires `rbac.view_auditentry` permission. The Audit link in the task list only appears for users whose JWT contains `can_view_audit: true`.
 
-**Filtering options:**
-- By action type (create/edit/delete)
-- By actor (which user performed the action)
-- By target type (comment/task/etc.)
-- Text search in payload or usernames
-- Paginated (50 entries per page)
+**REST API:** `GET /api/v1/rbac/audit/`
 
 ### Security & Immutability
 
-**Design principles:**
 - Audit entries use `editable=False` in admin
 - No `add_auditentry` or `change_auditentry` permissions granted to any role
 - `delete_auditentry` disabled for all users
 - Append-only by design
 
-**Enforcement:**
-- Django admin configured with `has_add_permission = False`
-- Django admin configured with `has_delete_permission = False`
-- Template fields set to `readonly_fields` for all columns
-
-### Retention Policy
-
-**Current:** Audit logs are retained indefinitely
-
-**Future consideration:** Implement archival/purge policy
-- Archive logs older than X months to cold storage
-- Purge logs older than Y years (with legal compliance review)
-- Maintain forensic usefulness while preventing unbounded growth
-
-## 🚩 Project highlights
-
-- Task model with ownership and secure `TaskDetailView` access  
-- Comment system with:
-  - Create / edit / soft-delete behavior
-  - **Edit window** enforcement (`COMMENTS_EDIT_WINDOW_MINUTES`)
-  - **FIRST_EDIT_ONLY** semantics — `edited_at` set once on first successful edit
-  - `(edited)` badge derived from `edited_at` (no boolean duplication)
-- Permission design:
-  - Model & QuerySet-driven helpers (`editable_by`, `deletable_by`, `can_be_*`)
-  - Views use `get_queryset()` and view-level flags for presentation
-- Background maintenance:
-  - `purge_comments` management command to permanently delete old soft-deleted records (supports `--dry-run`)
-- Developer experience:
-  - Dockerized dev environment (Postgres) with Docker Compose
-  - CI: GitHub Actions runs tests on push/PR
-  - Tests use `pytest` / `pytest-django` and cover edge cases
-
 ---
 
-## 🌐 REST API
+## REST API
 
 TaskFlow exposes a versioned REST API at `/api/v1/` using JWT authentication.
 
 ### Authentication
+
 ```bash
-# Get your access token
+# Get tokens
 curl -X POST http://localhost:8000/api/v1/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{"username": "your_user", "password": "your_pass"}'
 
-# Use it in subsequent requests
+# Use access token
 curl http://localhost:8000/api/v1/tasks/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
+
+The JWT payload includes a custom `can_view_audit` claim injected via `CustomTokenObtainPairSerializer`.
 
 ### Endpoints
 
@@ -241,40 +208,77 @@ curl http://localhost:8000/api/v1/tasks/ \
 | GET/PATCH/DELETE | `/api/v1/tasks/<id>/comments/<id>/` | Comment detail | Authenticated |
 | GET | `/api/v1/rbac/audit/` | Audit log | `rbac.view_auditentry` |
 
-### Interactive Docs
-Visit `/api/docs/` for full Swagger documentation.
+**Interactive Docs:** `/api/docs/` (Swagger UI)
+
+---
+
+## React Frontend
+
+The React frontend lives in `taskflow-frontend/` and is a separate Vite project that consumes the Django API.
+
+### Features
+
+- **JWT authentication** with silent token refresh via Axios interceptors
+- **Protected routes** — unauthenticated users redirected to `/login` with return path preserved
+- **Permission-gated routes** — audit log only accessible to users with `can_view_audit` in their JWT
+- **Task list** with load-more pagination
+- **Task detail** with nested comments
+- **Full comment CRUD** — create, inline edit (within 15-minute window), soft delete
+- **Optimistic UI** — comments appear/disappear instantly without page reload
+- **RBAC-aware UI** — edit/delete buttons only shown to the comment author within the permitted window
+
+### Project Structure
+
+```
+taskflow-frontend/src/
+├── components/
+│   ├── AuditLog.jsx       ← permission-gated audit view
+│   ├── CommentForm.jsx    ← comment creation form
+│   ├── Login.jsx          ← JWT login with redirect-back
+│   ├── ProtectedRoute.jsx ← token + optional permission check
+│   ├── TaskDetail.jsx     ← task + comments + CRUD
+│   └── TaskList.jsx       ← paginated task list
+├── hooks/
+│   ├── useFetch.js        ← generic single-resource fetch hook
+│   └── usePagination.js   ← paginated list fetch hook with load-more
+└── services/
+    ├── api.js             ← all API call functions
+    └── axiosInstance.js   ← configured Axios with auth + refresh interceptors
 ```
 
-## 🧠 Architecture & tech stack
+### Running the Frontend
 
-- **Framework:** Django  
-- **Database (dev/prod parity):** PostgreSQL (Docker), SQLite used for local dev/test if configured that way
-- **DevOps:** Docker, Docker Compose, GitHub Actions (CI)
-- **RBAC:** Django `Permission` model + custom Role & Membership layer
-- **Audit:** GenericForeignKey-based immutable audit log
-- **API Layer:** Django REST FRAMEWORK with JWT authentication (simplejwt)
-- **API Documentation:** drf-spectacular (Swagger UI at /api/docs/)
-- **Testing:** pytest + pytest-django, Django test client + DRF APIClient
+```bash
+cd taskflow-frontend
+npm install
+npm run dev
+```
 
-- **Design principles:**
-  - Single source of truth for permissions (QuerySets + Model methods)
-  - Templates remain presentation-only; business rules live on the server
-  - Fail-safe defaults: soft delete + purge, 404 over 403 to avoid leaking presence
-  - API views are separate from Django views: api_views.py handles JSON resnponses for external clients while views.py handles HTML rendering for browsers. Business logic lives in models so both layers share the same rules without duplication.
+Runs on `http://localhost:5173`. Django must be running on `http://localhost:8000`.
 
 ---
 
-## Security Architecture
+## Project highlights
 
-- Role-based access control (RBAC)
-- Model-level permission enforcement
-- Queryset-level filtering
-- Audit logging for create/edit/delete
-- Permission-gated audit visibility
+- Task model with ownership and secure `TaskDetailView` access
+- Comment system with:
+  - Create / edit / soft-delete behavior
+  - **Edit window** enforcement (`COMMENTS_EDIT_WINDOW_MINUTES`)
+  - **FIRST_EDIT_ONLY** semantics — `edited_at` set once on first successful edit
+  - `(edited)` badge derived from `edited_at` (no boolean duplication)
+- Permission design:
+  - Model & QuerySet-driven helpers (`editable_by`, `deletable_by`, `can_be_*`)
+  - Views use `get_queryset()` and view-level flags for presentation
+- Background maintenance:
+  - `purge_deleted_comments` management command to permanently delete old soft-deleted records (supports `--dry-run`)
+- Developer experience:
+  - Dockerized dev environment (Postgres) with Docker Compose
+  - CI: GitHub Actions runs tests on push/PR
+  - Tests use `pytest` / `pytest-django` and cover edge cases
 
 ---
 
-## 🧪 Testing Philosophy
+## Testing Philosophy
 
 - Tests describe **behavior**, not implementation details
 - Boundary conditions are explicitly tested:
@@ -282,131 +286,92 @@ Visit `/api/docs/` for full Swagger documentation.
   - Attempted edits after deletion
   - Re-edit attempts not overwriting `edited_at`
 - Unauthorized access returns **404** to prevent information leakage
-- RBAC permission matrices will be tested to ensure correct role enforcement
+- RBAC permission matrices tested to ensure correct role enforcement
 - Audit tests ensure critical actions create immutable audit entries
 
-Run tests with:
-
 ```bash
-python manage.py test
+pytest
 ```
 
 ---
 
-
-## 🧹 Background purge command
+## Background purge command
 
 Permanently delete soft-deleted comments older than a given number of days.
 
-Dry run (recommended):
-
 ```bash
-python manage.py purge_comments --days 30 --dry-run
-```
+# Dry run (recommended first)
+python manage.py purge_deleted_comments --days 30 --dry-run
 
-Actual deletion:
-
-```bash
-python manage.py purge_comments --days 30
+# Actual deletion
+python manage.py purge_deleted_comments --days 30
 ```
 
 ---
 
-## 🐳 Running with Docker
+## Running with Docker
 
-TaskFlow can be run fully inside Docker with PostgreSQL.
-
-* Copy the example file and adjust values if needed:
-
-'''bash
+```bash
+# Copy and configure environment
 cp .env.example .env
-'''
 
-* Build containers:
-
-'''bash
+# Build and start
 docker compose build
-'''
-
-* Start the application:
-
-'''bash
 docker compose up
-'''
 
-The app will be available at:
+# App available at http://localhost:8000/
 
-'''bash
-http://localhost:8000/
-'''
+# Run tests inside Docker
+docker compose run --rm web pytest
 
-* Run test inside Docker
-
-'''bash
-docker compose run --rm web python manage.py test
-'''
-
-* Stop containers
-
-'''bash
+# Stop
 docker compose down
-'''
+```
 
 ---
 
-## ⚙️ Key settings
+## Key settings
 
 ```python
-COMMENTS_EDIT_WINDOW_MINUTES = 15
+COMMENTS_EDIT_WINDOW_MINUTES = 15  # Controls edit window for comments
 ```
 
-Controls how long after creation a comment can be edited.
+---
+
+## Lessons learned
+
+**Backend**
+
+- **Model-driven rules scale better than view-driven checks.** Putting permissions in QuerySets prevents duplication and accidental leaks.
+- **Derived state is preferable to duplicate flags.** `edited_at` as the source of "edited" avoids drift and keeps tests simple.
+- **Tests catch integration surprises early.** Moving to an environment-based settings layout revealed template path and redirect assumptions that were otherwise hidden.
+- **Containerized dev + CI = reproducible engineering.** Docker + GitHub Actions ensured the same tests run in dev and CI, surfacing env-specific issues quickly.
+- **RBAC centralizes authorization.** Roles can be modified without touching code, making permission management scalable.
+- **Audit trails require immutability.** Admin interfaces must be carefully configured to prevent tampering with historical records.
+- **Model-level business logic makes security reusable.** By implementing `soft_delete()` and `apply_edit()` in the models, every interface — Django views, API endpoints, future integrations — automatically inherits the same rules.
+- **Serializers translate data; they should not enforce policy.** Business rules like edit-window validation belong in the model, not the serializer.
+- **Configuration errors often fail silently.** The `COMMENT_EDIT_WINDOW_MINUTES` vs `COMMENTS_EDIT_WINDOW_MINUTES` typo disabled a feature without raising an error. Automated tests are critical.
+- **Authentication mechanisms encode architectural tradeoffs.** Session auth keeps state on the server and supports true logout. JWT shifts state to the client, simplifying server infrastructure but making token invalidation significantly harder.
+- **URL separation reflects long-term architecture.** Maintaining `api_urls.py` separately from `urls.py` isolates API contracts from the browser interface.
+
+**Frontend**
+
+- **The frontend is a consumer of backend rules, not a co-enforcer.** Edit and delete buttons are a UX convenience — Django enforces the actual permission on every request. Never assume the frontend is a security layer.
+- **Axios interceptors are middleware for HTTP.** Centralizing auth header attachment and 401 handling in one place eliminates repetition and makes token refresh transparent to the rest of the app.
+- **Optimistic UI requires understanding failure modes.** Updating state before the API responds feels fast, but you must handle the case where the API call fails and roll back the change.
+- **Custom hooks enforce separation of concerns.** `useFetch` and `usePagination` extract data-fetching logic out of components, making components responsible only for rendering.
+- **JWTs can carry custom claims.** Baking `can_view_audit` into the token at login avoids an extra API call to determine permissions on the frontend. The tradeoff is that the claim is stale until the next login.
+- **`useState` is watched by React; plain variables are not.** This distinction is the core of why React re-renders work the way they do.
+- **SPAs need routing discipline.** React Router's `state` prop on `<Navigate>` enables redirect-back-after-login, which requires deliberate implementation — it doesn't happen automatically.
+- **Immutable array updates are non-negotiable.** Using `.push()` instead of spread syntax breaks React's ability to detect state changes and trigger re-renders.
 
 ---
 
-## 🧾 Lessons learned
+## Notes
 
-* **Model-driven rules scale better than view-driven checks.** Putting permissions in QuerySets prevents duplication and accidental leaks.
-
-* **Derived state is preferable to duplicate flags.** edited_at as the source of “edited” avoids drift and keeps tests simple.
-
-* **Tests catch integration surprises early.** Moving to an environment-based settings layout revealed template path and redirect assumptions that were otherwise hidden.
-
-* **Containerized dev + CI = reproducible engineering.** Docker + GitHub Actions ensured the same tests run in dev and CI, surfacing env-specific issues quickly.
-
-* **Incremental, opinionated changes win.** Small, well-tested changes (UI-only or model-only) are safer than broad refactors.
-
-* **RBAC** centralizes authorization logic and reduces permission drift
-
-* **Audit trails** are essential for production-grade systems
-
-* **RBAC centralizes authorization** - Roles can be modified without touching code, making permission management scalable
-
-* **Audit trails require immutability** - Admin interfaces must be carefully configured to prevent tampering with historical records
-
-* **Template logic should trust the backend** - Permission checks belong in models/views, not templates. The template should display what the view decides, not make authorization decisions itself
-
-* **Organization scoping is a cross-cutting concern** - QuerySet helpers that apply organization filtering consistently prevent data leakage and simplify security
-
-* **Superuser access requires special handling** - Production systems need privileged accounts that can operate across organizational boundaries for support and debugging
-
-* **Model-level business logic makes security reusable** - By implementing soft_delete() and apply_edit() in the models, every interface—Django views, API endpoints, and future integrations—automatically inherits the same rules. If those checks lived in views, each interface would require its own duplicated implementation.
-
-* **Serializers translate data; they should not enforce policy** - Business rules like edit-window validation belong in the model, not the serializer. Calling apply_edit() keeps decision-making centralized while the serializer focuses solely on input/output transformation.
-
-* **Configuration errors often fail silently** - The COMMENT_EDIT_WINDOW_MINUTES vs COMMENTS_EDIT_WINDOW_MINUTES typo disabled a feature without raising an error. Misconfigured settings frequently produce subtle behavioral bugs rather than crashes, which is why automated tests are critical.
-
-* **Authentication mechanisms encode architectural tradeoffs** - Session authentication keeps state on the server and supports true logout and revocation. JWT shifts state to the client, simplifying server infrastructure but making token invalidation significantly harder.
-
-* **URL separation reflects long-term architecture** - Maintaining api_urls.py separately from urls.py isolates API contracts from the browser interface. This allows the UI layer to evolve—or be removed—without altering the API surface.
-
----
-
-## 📌 Notes
-
-* This repository intentionally prioritizes backend correctness over frontend completeness.
-
-* The UI is minimal and exists only to surface backend behavior already enforced at the model/query level.
+- This repository intentionally prioritizes backend correctness over frontend completeness.
+- The React UI is intentionally unstyled — it exists to demonstrate full-stack integration and backend behavior, not frontend polish.
+- Known gaps for future work: frontend form validation, React component tests, and token-expiry-aware redirect after silent refresh.
 
 ---
 

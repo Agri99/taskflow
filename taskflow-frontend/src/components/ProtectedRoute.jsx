@@ -5,7 +5,6 @@ function ProtectedRoute({ children, permissionCheck }) {
     const location = useLocation()
 
     if (!token) {
-        console.log('from:', location.state)
         return <Navigate to='/login' state={{ from: location }} />
     } 
 
