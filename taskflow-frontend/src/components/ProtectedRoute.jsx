@@ -1,10 +1,12 @@
-import { Navigate } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 
 function ProtectedRoute({ children, permissionCheck }) {
     const token = localStorage.getItem('access_token')
+    const location = useLocation()
 
     if (!token) {
-        return <Navigate to='/login' />
+        console.log('from:', location.state)
+        return <Navigate to='/login' state={{ from: location }} />
     } 
 
     if (permissionCheck && !permissionCheck()) {

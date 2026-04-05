@@ -1,10 +1,14 @@
 import { useState } from "react"
 import { loginUser } from "../services/api"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 function Login() {
     const [user, setUser] = useState('')
     const [password, setPassword] = useState('')
+    const [error, setError] = useState(null)
+
+    const location = useLocation()
+    const from = location.state?.from?.pathname || '/tasks'
 
     const navigate = useNavigate()
 
@@ -14,16 +18,16 @@ function Login() {
             const data = await loginUser(user, password)
             localStorage.setItem('access_token', data.access)
             localStorage.setItem('refresh_token', data.refresh)
-            navigate('/tasks')
-            console.log('Login successful!', data.access)
+            navigate(from)
         }catch (err) {
-            console.error('Login failed:', err.message)
+            setError(err.message)
         }
     }
 
     return (
     
         <form onSubmit={handleSubmit}>
+            {error && <p style={{color: 'red'}}>{error}</p>}
             <label>Username</label>
             <input type="text" value={user} onChange={(e) => setUser(e.target.value)}/>
         
