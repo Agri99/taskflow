@@ -100,6 +100,14 @@ COMMENTS_ACTIVE_ONLY = True # Default: hide soft-deleted comments
 
 COMMENTS_EDIT_WINDOW_MINUTES = 15 # Default time limit for comments edit window
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+CELERY_ACCEPT_CONTENT = ['json']
+
+CELERY_TASK_SERIALIZER = 'json'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
