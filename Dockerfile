@@ -19,6 +19,7 @@ COPY requirements.txt /app/
 
 # Install Python dependencies
 RUN pip install --upgrade pip
+COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 
 # Copy project files into container
