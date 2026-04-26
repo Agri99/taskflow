@@ -7,6 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Task
 from .serializers import TaskSerializer
 from .filters import TaskFilter
+from .tasks import notify_org_members_new_task
 
 
 class TaskListCreateAPIView(ListCreateAPIView):
@@ -25,10 +26,11 @@ class TaskListCreateAPIView(ListCreateAPIView):
         return qs.active().order_by('-created_at')
     
     def perform_create(self, serializer):
-        serializer.save(
-            owner = self.request.user,
-            organization = self.request.user.org_profile.organization,
-        )
+        task = serializer.save(
+                    owner = self.request.user,
+                    organization = self.request.user.org_profile.organization,
+                )
+        notify_org_members_new_task.delay(task.id)
 
 class TaskRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]

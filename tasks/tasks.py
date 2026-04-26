@@ -6,7 +6,7 @@ from .models import Task
 
 
 @shared_task
-def notify_org_member_new_task(task_id):
+def notify_org_members_new_task(task_id):
     task = Task.objects.get(id=task_id)
     member_emails = MembershipProfile.objects.filter(
         organization=task.organization
@@ -16,5 +16,5 @@ def notify_org_member_new_task(task_id):
             'New Task Created',
             f'A new task "{task.title}" has been created. Please have a look!',
             'noreply@taskflow.com',
-            [mail]
+            [email]
         )

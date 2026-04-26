@@ -4,7 +4,8 @@ import os
 DEBUG = False
 
 CORS_ALLOWED_ORIGINS = [
-    'https://taskflow.com'
+    'https://taskflow.com',
+    'http://localhost:5173'
 ]
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
@@ -19,3 +20,5 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
