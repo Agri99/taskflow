@@ -4,12 +4,14 @@ from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
 from django.core.exceptions import PermissionDenied
+from django.contrib.contenttypes.models import ContentType
 
 from tasks.models import Task
 from typing import ClassVar
 from .managers import CommentQuerySet, CommentManager
 from rbac.services import user_has_perm
 from rbac.models import AuditEntry, OrgModel
+from .tasks import create_audit_entry
 
 User = get_user_model()
 
@@ -41,15 +43,19 @@ class Comment(OrgModel):
             organization = task.organization,
         )
 
-        AuditEntry.objects.create_entry(
-            actor = author,
+        target_ct = ContentType.objects.get_for_model(comment)
+
+        create_audit_entry.delay(
+            actor_id = author.id,
             action = AuditEntry.ACTION_CREATE,
-            target = comment,
+            target_content_type_id = target_ct.id,
+            target_object_id = comment.id,
             payload = {
                 'task_id': task.id,
                 'author_id': author.id,
                 'content': content,
-            }
+            },
+            organization_id = task.organization.id,
         )
 
         return comment
