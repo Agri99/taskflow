@@ -24,7 +24,7 @@ class CommentListCreateAPIViews(ListCreateAPIView):
     def get_queryset(self):
         return Comment.objects.for_user(self.request.user).filter(
             task=self.get_task()
-        )
+        ).order_by('-created_at')
     
     def create(self, request, *args, **kwargs):
         task = self.get_task()

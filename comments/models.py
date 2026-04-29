@@ -11,7 +11,6 @@ from typing import ClassVar
 from .managers import CommentQuerySet, CommentManager
 from rbac.services import user_has_perm
 from rbac.models import AuditEntry, OrgModel
-from .tasks import create_audit_entry
 
 User = get_user_model()
 
@@ -34,8 +33,11 @@ class Comment(OrgModel):
     objects: ClassVar[CommentManager] = CommentManager()                    # Default Manager: active only
     all_objects = CommentQuerySet.as_manager()                              # Access including deleted
 
+    
     @classmethod
     def create_with_audit(cls, *, task, author, content):
+        from .tasks import create_audit_entry
+        
         comment = cls.objects.create(
             task = task,
             author = author,
