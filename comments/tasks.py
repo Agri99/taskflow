@@ -15,18 +15,20 @@ def purge_old_comments(days=30):
     qs.delete()
     return f'Purged {deleted_count} comments'
 
-@shared_task
-def create_audit_entry(actor_id, action, target_content_type_id, target_object_id, payload, organization_id):
-    actor = User.objects.get(pk=actor_id) if actor_id else None
-    organization = Organization.objects.get(pk=organization_id)
-    ct = ContentType.objects.get(pk=target_content_type_id)
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def create_audit_entry(self, actor_id, action, target_content_type_id, target_object_id, payload, organization_id):
+    try:
+        actor = User.objects.get(pk=actor_id) if actor_id else None
+        organization = Organization.objects.get(pk=organization_id)
+        ct = ContentType.objects.get(pk=target_content_type_id)
 
-    AuditEntry.objects.create(
-        actor=actor,
-        action=action,
-        target_content_type=ct,
-        target_object_id=target_object_id,
-        payload=payload,
-        organization=organization
-    )
-
+        AuditEntry.objects.create(
+            actor=actor,
+            action=action,
+            target_content_type=ct,
+            target_object_id=target_object_id,
+            payload=payload,
+            organization=organization
+        )
+    except Exception as exc:
+        raise self.retry(exc=exc)

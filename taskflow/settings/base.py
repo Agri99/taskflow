@@ -112,6 +112,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULE = {
     'purge-deleted-comments': {
         'task': 'comments.tasks.purge_old_comments',
+        # 'schedule': 10.0, # runs every 10 seconds for testing
         'schedule': crontab(hour=2, minute=0), # runs at 2:00 AM daily
         'kwargs': {'days': 30}
     }
