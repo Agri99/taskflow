@@ -33,6 +33,24 @@ services:
     ports:
       - '6379:6379'
 
+  celery-beat:
+    build: .
+    command: celery -A taskflow beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DJANGO_ENV=prod
+      - POSTGRES_DB=taskflow
+      - POSTGRES_USER=taskflow
+      - POSTGRES_PASSWORD=taskflow
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+
   celery:
     build: .
     command: celery -A taskflow worker --loglevel=info

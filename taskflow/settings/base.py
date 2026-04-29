@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -107,6 +108,14 @@ CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 
 CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    'purge-deleted-comments': {
+        'task': 'comments.tasks.purge_old_comments',
+        'schedule': crontab(hour=2, minute=0), # runs at 2:00 AM daily
+        'kwargs': {'days': 30}
+    }
+}
 
 TEMPLATES = [
     {
