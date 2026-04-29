@@ -1,5 +1,12 @@
 from celery import shared_task
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
 from .models import Comment
+from rbac.models import AuditEntry
+from organizations.models import Organization
+
+User = get_user_model()
+
 
 @shared_task
 def purge_old_comments(days=30):
@@ -7,3 +14,19 @@ def purge_old_comments(days=30):
     deleted_count = qs.count()
     qs.delete()
     return f'Purged {deleted_count} comments'
+
+@shared_task
+def create_audit_entry(actor_id, action, target_content_type_id, target_object_id, payload, organization_id):
+    actor = User.objects.get(pk=actor_id) if actor_id else None
+    organization = Organization.objects.get(pk=organization_id)
+    ct = ContentType.objects.get(pk=target_content_type_id)
+
+    AuditEntry.objects.create(
+        actor=actor,
+        action=action,
+        target_content_type=ct,
+        target_object_id=target_object_id,
+        payload=payload,
+        organization=organization
+    )
+
