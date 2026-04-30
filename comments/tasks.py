@@ -22,7 +22,7 @@ def create_audit_entry(self, actor_id, action, target_content_type_id, target_ob
         organization = Organization.objects.get(pk=organization_id)
         ct = ContentType.objects.get(pk=target_content_type_id)
 
-        AuditEntry.objects.create(
+        AuditEntry.objects.get_or_create(
             actor=actor,
             action=action,
             target_content_type=ct,

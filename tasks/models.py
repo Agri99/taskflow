@@ -22,6 +22,7 @@ class Task(OrgModel):
         ('H', 'high'),
     ]
     title = models.CharField(max_length=50)
+    notification_sent = models.BooleanField(default=False)
     description = models.TextField()
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='T')
     priority = models.CharField(max_length=1, choices=PRIORITY_CHOICES, default='L')

@@ -61,11 +61,13 @@ class AuditEntry(OrgModel):
     ACTION_CREATE = 'create'
     ACTION_EDIT = 'edit'
     ACTION_DELETE = 'delete'
+    ACTION_NOTIFICATION = 'notification'
 
     ACTION_CHOICES = [
         (ACTION_CREATE, 'create'),
         (ACTION_EDIT, 'edit'),
         (ACTION_DELETE, 'delete'),
+        (ACTION_NOTIFICATION, 'notification'),
     ]
 
     actor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
