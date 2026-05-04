@@ -48,16 +48,6 @@ class Membership(models.Model):
         return f"{self.user} -> {self.role}"
     
 class AuditEntry(OrgModel):
-    """
-    Immutable audit record for important actions.
-
-    Fields:
-    - actor: user who performed the action (nullable for system actions)
-    - action: short stirng (create/edit/delete)
-    - target: GenericForeignKey to the model instance
-    - timestamp: when the action occured
-    - payload: small JSON diff or metadata (immutable by convention)
-    """
     ACTION_CREATE = 'create'
     ACTION_EDIT = 'edit'
     ACTION_DELETE = 'delete'

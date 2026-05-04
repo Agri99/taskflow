@@ -10,9 +10,24 @@ User = get_user_model()
 
 @shared_task
 def purge_old_comments(days=30):
-    qs = Comment.all_objects.purge_older_than(days)
-    deleted_count = qs.count()
-    qs.delete()
+    from organizations.models import Organization
+
+    for org in Organization.objects.all():
+        qs = Comment.all_objects.filter(organization=org).purge_older_than(days)
+        deleted_count = qs.count()
+        qs.delete()
+
+        if deleted_count > 0:
+            # Log the purge action
+            AuditEntry.objects.create(
+                actor=None,
+                action='delete',
+                target_content_type=ContentType.objects.get_for_model(Comment),
+                target_object_id=None, # No single object
+                payload={'deleted_count': deleted_count, 'older_than_days': days},
+                organization=org, # System-wide action, no org
+            )
+
     return f'Purged {deleted_count} comments'
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
