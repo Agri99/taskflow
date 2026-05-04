@@ -47,15 +47,6 @@ class TaskListCreateAPIView(ListCreateAPIView):
             result = notify_org_members_new_task.delay(task.id)
             result.get(timeout=30) # WAIT up to 30 seconds for result
 
-            AuditEntry.objects.create(
-                actor = self.request.user,
-                action = 'notification',
-                target_content_type = ContentType.objects.get_for_model(Task),
-                target_object_id = task.id,
-                payload = {'notification': 'completed'},
-                organization = self.request.user.org_profile.organization,
-            )
-
             task.notification_sent = True # Mark as complete only after success
             task.save()
         except Exception as exc:
