@@ -42,6 +42,11 @@ export const createComment = async (taskId, content) => {
     return response.data
 }
 
+export const createTask = async (formData) => {
+    const response = await axiosInstance.post(`/tasks/`, formData)
+    return response.data
+}
+
 export const getCurrentUserID = () => {
     const token = getToken()
     if (!token) return null
